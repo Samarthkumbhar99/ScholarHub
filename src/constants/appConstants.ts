@@ -3,10 +3,10 @@
  */
 export const APP_CONFIG = {
   APP_NAME: 'ScholarHub',
-  TAGLINE: 'Smart Scholarship Discovery & Management Platform',
+  TAGLINE: 'Discover. Compare. Apply. Track. Achieve.',
   VERSION: '1.0.0',
   PLATFORM_TARGET: 'student-mobile',
-  STATUS: 'Foundation Ready',
+  STATUS: 'Step 4 Ready',
 } as const;
 
 export const STORAGE_KEYS = {

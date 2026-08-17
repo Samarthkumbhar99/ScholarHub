@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types/navigation';
+import { AuthStackParamList, RootStackParamList } from '../../types/navigation';
 import { useAppDispatch } from '../../hooks';
 import { setCredentials } from '../../store/slices/authSlice';
 import {
@@ -25,6 +25,7 @@ type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavProp>();
+  const parentNavigation = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
   const dispatch = useAppDispatch();
 
   const [email, setEmail] = useState('alex.morgan@university.edu');
@@ -59,6 +60,9 @@ export const LoginScreen: React.FC = () => {
           },
         })
       );
+      if (parentNavigation) {
+        parentNavigation.replace('Student');
+      }
     }, 600);
   };
 

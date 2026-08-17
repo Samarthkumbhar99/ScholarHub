@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { useAppSelector } from '../hooks';
 import { SplashScreen } from '../screens/splash';
 import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
@@ -15,8 +14,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * Top-level application navigator routing between Splash, Auth, and Student stacks
  */
 export const RootNavigator: React.FC = () => {
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-
   return (
     <Stack.Navigator
       initialRouteName="Splash"
@@ -28,20 +25,19 @@ export const RootNavigator: React.FC = () => {
       {/* Splash Screen */}
       <Stack.Screen name="Splash" component={SplashScreen} />
 
-      {/* Conditional Stacks or Direct Access */}
-      {!isAuthenticated ? (
-        <Stack.Screen
-          name="Auth"
-          component={AuthNavigator}
-          options={{ animation: 'slide_from_right' }}
-        />
-      ) : (
-        <Stack.Screen
-          name="Student"
-          component={StudentNavigator}
-          options={{ animation: 'slide_from_right' }}
-        />
-      )}
+      {/* Auth Stack (Login, Register) */}
+      <Stack.Screen
+        name="Auth"
+        component={AuthNavigator}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Student Feature Tabs (Dashboard, Scholarships, Applications, Documents, Notifications, Profile) */}
+      <Stack.Screen
+        name="Student"
+        component={StudentNavigator}
+        options={{ animation: 'slide_from_right' }}
+      />
 
       {/* Dev / Design System Showcase Screens */}
       <Stack.Screen name="Showcase" component={ShowcaseScreen} />

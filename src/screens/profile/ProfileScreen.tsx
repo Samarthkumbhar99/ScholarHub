@@ -1,5 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { logout } from '../../store/slices/authSlice';
 import {
@@ -14,6 +17,7 @@ import {
 
 export const ProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAppSelector((state) => state.auth);
 
   const studentDisplayName = user?.firstName
@@ -22,6 +26,7 @@ export const ProfileScreen: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    navigation.replace('Auth');
   };
 
   return (

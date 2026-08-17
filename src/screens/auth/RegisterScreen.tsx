@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types/navigation';
+import { AuthStackParamList, RootStackParamList } from '../../types/navigation';
 import { useAppDispatch } from '../../hooks';
 import { setCredentials } from '../../store/slices/authSlice';
 import {
@@ -26,6 +26,7 @@ type RegisterNavProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterNavProp>();
+  const parentNavigation = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
   const dispatch = useAppDispatch();
 
   const [fullName, setFullName] = useState('Alex Morgan');
@@ -71,6 +72,9 @@ export const RegisterScreen: React.FC = () => {
           },
         })
       );
+      if (parentNavigation) {
+        parentNavigation.replace('Student');
+      }
     }, 600);
   };
 
