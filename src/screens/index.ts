@@ -1,4 +1,5 @@
 export * from './FoundationScreen';
+export * from './ShowcaseScreen';
 export * from './splash';
 export * from './auth';
 export * from './registration';

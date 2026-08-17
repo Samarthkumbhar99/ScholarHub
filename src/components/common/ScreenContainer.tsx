@@ -1,27 +1,21 @@
 import React from 'react';
-import { View, ScrollView, ViewProps } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-export interface ScreenContainerProps extends ViewProps {
-  children: React.ReactNode;
-  scrollable?: boolean;
-  className?: string;
-  contentContainerClassName?: string;
-  withSafeArea?: boolean;
-}
+import { ScreenContainerProps } from './types';
 
 /**
- * ScreenContainer provides standardized padding and safe-area boundaries for all screens.
+ * ScreenContainer
+ * Standard wrapper providing safe area padding, uniform background, and scroll handling
  */
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   children,
   scrollable = false,
+  withSafeArea = true,
   className = '',
   contentContainerClassName = '',
-  withSafeArea = true,
   ...rest
 }) => {
-  const containerClass = `flex-1 bg-slate-50 dark:bg-slate-900 ${className}`;
+  const containerClass = `flex-1 bg-slate-50 ${className}`;
 
   if (scrollable) {
     return withSafeArea ? (

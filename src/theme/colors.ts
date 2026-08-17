@@ -1,8 +1,9 @@
 /**
  * ScholarHub Design System Colors
- * Consistent color palette matching mobile UI specifications
+ * Centralized, type-safe color palette for all ScholarHub components
  */
 export const colors = {
+  // Primary Brand Colors (Blue Scale)
   primary: {
     50: '#EFF6FF',
     100: '#DBEAFE',
@@ -16,6 +17,8 @@ export const colors = {
     900: '#172554',
     DEFAULT: '#1D4ED8',
   },
+
+  // Secondary Brand Colors (Emerald/Teal Scale)
   secondary: {
     50: '#ECFDF5',
     100: '#D1FAE5',
@@ -25,8 +28,12 @@ export const colors = {
     500: '#10B981',
     600: '#059669',
     700: '#047857',
+    800: '#065F46',
+    900: '#064E3B',
     DEFAULT: '#059669',
   },
+
+  // Scholar Theme Accents
   scholar: {
     blue: '#1E40AF',
     navy: '#0F172A',
@@ -37,6 +44,8 @@ export const colors = {
     light: '#F8FAFC',
     border: '#E2E8F0',
   },
+
+  // Neutral / Grayscale
   neutral: {
     50: '#F8FAFC',
     100: '#F1F5F9',
@@ -49,22 +58,47 @@ export const colors = {
     800: '#1E293B',
     900: '#0F172A',
   },
+
+  // Status Colors
   status: {
     success: '#10B981',
+    successLight: '#ECFDF5',
     warning: '#F59E0B',
+    warningLight: '#FFFBEB',
     error: '#EF4444',
+    errorLight: '#FEF2F2',
     info: '#3B82F6',
+    infoLight: '#EFF6FF',
   },
+
+  // Semantic Backgrounds
   background: {
-    light: '#FFFFFF',
-    surface: '#F8FAFC',
+    primary: '#FFFFFF',
+    secondary: '#F8FAFC',
+    surface: '#F1F5F9',
     card: '#FFFFFF',
+    dark: '#0F172A',
+    backdrop: 'rgba(15, 23, 42, 0.5)',
   },
+
+  // Semantic Text
   text: {
     primary: '#0F172A',
     secondary: '#475569',
     muted: '#94A3B8',
     inverted: '#FFFFFF',
+    accent: '#1D4ED8',
+    error: '#EF4444',
+    success: '#10B981',
+  },
+
+  // Semantic Borders
+  border: {
+    subtle: '#F1F5F9',
+    default: '#E2E8F0',
+    strong: '#CBD5E1',
+    focus: '#2563EB',
+    error: '#EF4444',
   },
 } as const;
 

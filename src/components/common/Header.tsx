@@ -1,48 +1,54 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-
-export interface HeaderProps {
-  title: string;
-  subtitle?: string;
-  showBack?: boolean;
-  onBackPress?: () => void;
-  rightAction?: React.ReactNode;
-}
+import { HeaderProps } from './types';
 
 /**
- * Standardized top navigation and title bar for screens
+ * Header
+ * Standardized navigation and screen title header
  */
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
   showBack = false,
   onBackPress,
+  leftAction,
   rightAction,
+  borderBottom = true,
+  className = '',
 }) => {
   return (
-    <View className="flex-row items-center justify-between py-3 mb-4 border-b border-slate-200">
-      <View className="flex-row items-center flex-1">
-        {showBack && (
+    <View
+      className={`flex-row items-center justify-between py-3 mb-4 ${
+        borderBottom ? 'border-b border-slate-200' : ''
+      } ${className}`}
+    >
+      <View className="flex-row items-center flex-1 mr-2">
+        {leftAction ? (
+          <View className="mr-3">{leftAction}</View>
+        ) : showBack ? (
           <TouchableOpacity
             onPress={onBackPress}
-            className="mr-3 p-2 rounded-full bg-slate-100 active:bg-slate-200"
+            accessibilityRole="button"
             accessibilityLabel="Back"
+            className="mr-3 h-10 w-10 rounded-full bg-slate-100 items-center justify-center active:bg-slate-200"
           >
-            <Text className="text-scholar-navy font-bold text-base">←</Text>
+            <Text className="text-slate-800 font-bold text-base">←</Text>
           </TouchableOpacity>
-        )}
+        ) : null}
+
         <View className="flex-1">
-          <Text className="text-xl font-bold text-scholar-navy" numberOfLines={1}>
+          <Text className="text-xl font-extrabold text-slate-900" numberOfLines={1}>
             {title}
           </Text>
           {subtitle && (
-            <Text className="text-xs text-slate-500 font-medium" numberOfLines={1}>
+            <Text className="text-xs text-slate-500 font-medium mt-0.5" numberOfLines={1}>
               {subtitle}
             </Text>
           )}
         </View>
       </View>
-      {rightAction && <View className="ml-2">{rightAction}</View>}
+
+      {rightAction && <View className="ml-2 flex-row items-center">{rightAction}</View>}
     </View>
   );
 };

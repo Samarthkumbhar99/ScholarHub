@@ -1,1 +1,2 @@
-export * from './AppCard';
+export * from '../common/Card';
+export { default } from '../common/Card';
