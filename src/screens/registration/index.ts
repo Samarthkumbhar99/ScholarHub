@@ -1,5 +1,2 @@
-/**
- * Registration Module
- * Module ready for upcoming multi-step student registration flows
- */
-export const REGISTRATION_MODULE_NAME = 'Registration';
+export * from '../auth/RegisterScreen';
+export { default } from '../auth/RegisterScreen';

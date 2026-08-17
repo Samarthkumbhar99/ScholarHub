@@ -1,7 +1,7 @@
 /**
- * User & Profile Types
+ * User & Profile Types for ScholarHub
  */
-export type UserRole = 'student' | 'admin';
+export type UserRole = 'student' | 'admin' | 'reviewer';
 
 export type EducationLevel =
   | 'high_school'
@@ -14,6 +14,8 @@ export interface UserProfile {
   email: string;
   firstName: string;
   lastName: string;
+  name?: string;
+  role?: UserRole;
   avatarUrl?: string;
   educationLevel: EducationLevel;
   major?: string;

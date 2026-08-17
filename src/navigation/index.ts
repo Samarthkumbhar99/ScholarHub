@@ -1,22 +1,27 @@
-/**
- * ScholarHub Navigation Structure
- * Central route name constants and types
- */
+export * from './RootNavigator';
+export * from './AuthNavigator';
+export * from './StudentNavigator';
+export * from '../types/navigation';
+
 export const ROUTES = {
-  FOUNDATION: 'Foundation',
+  // Root
   SPLASH: 'Splash',
   AUTH: 'Auth',
-  REGISTRATION: 'Registration',
+  STUDENT: 'Student',
+  SHOWCASE: 'Showcase',
+  FOUNDATION: 'Foundation',
+
+  // Auth
+  LOGIN: 'Login',
+  REGISTER: 'Register',
+
+  // Student
   DASHBOARD: 'Dashboard',
   SCHOLARSHIPS: 'Scholarships',
-  SCHOLARSHIP_DETAIL: 'ScholarshipDetail',
   APPLICATIONS: 'Applications',
   DOCUMENTS: 'Documents',
   NOTIFICATIONS: 'Notifications',
-  STUDY_ABROAD: 'StudyAbroad',
   PROFILE: 'Profile',
 } as const;
 
 export type RouteNames = (typeof ROUTES)[keyof typeof ROUTES];
-
-export * from '../types/navigation';

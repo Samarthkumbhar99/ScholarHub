@@ -1,17 +1,38 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 /**
- * Navigation Type Definitions for ScholarHub
+ * Authentication Stack Routes
  */
-export type RootStackParamList = {
-  Foundation: undefined;
-  Splash: undefined;
-  Auth: undefined;
-  Registration: undefined;
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+/**
+ * Student Main Tab / Feature Routes
+ */
+export type StudentTabParamList = {
   Dashboard: undefined;
   Scholarships: undefined;
-  ScholarshipDetail: { scholarshipId: string };
   Applications: undefined;
   Documents: undefined;
   Notifications: undefined;
-  StudyAbroad: undefined;
   Profile: undefined;
 };
+
+/**
+ * Root Stack Routes for the Application
+ */
+export type RootStackParamList = {
+  Splash: undefined;
+  Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
+  Student: NavigatorScreenParams<StudentTabParamList> | undefined;
+  Showcase: undefined;
+  Foundation: undefined;
+};
+
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
