@@ -40,22 +40,22 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
       {/* Actions */}
       <View className="flex-row items-center gap-3">
-        {secondaryActionTitle && onSecondaryAction && (
+        {Boolean(secondaryActionTitle && onSecondaryAction) ? (
           <AppButton
             title={secondaryActionTitle}
             variant="outline"
             size="md"
             onPress={onSecondaryAction}
           />
-        )}
-        {onRetry && (
+        ) : null}
+        {Boolean(onRetry) ? (
           <AppButton
             title={retryTitle}
             variant="danger"
             size="md"
             onPress={onRetry}
           />
-        )}
+        ) : null}
       </View>
     </View>
   );

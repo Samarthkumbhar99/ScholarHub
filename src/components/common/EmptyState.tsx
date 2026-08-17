@@ -33,14 +33,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       </Text>
 
       {/* Description */}
-      {description && (
+      {Boolean(description) ? (
         <Text className="text-sm text-slate-500 text-center leading-relaxed max-w-[280px] mb-5">
           {description}
         </Text>
-      )}
+      ) : null}
 
       {/* Action CTA Button */}
-      {actionTitle && onActionPress && (
+      {Boolean(actionTitle && onActionPress) ? (
         <AppButton
           title={actionTitle}
           variant={actionVariant}
@@ -48,7 +48,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           onPress={onActionPress}
           className="mt-1"
         />
-      )}
+      ) : null}
     </View>
   );
 };

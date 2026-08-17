@@ -35,7 +35,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const isInputDisabled = disabled || editable === false;
-  const showClear = clearable && value && value.length > 0 && !isInputDisabled;
+  const showClear = Boolean(clearable && value && value.length > 0 && !isInputDisabled);
 
   const handleClear = () => {
     if (onChangeText) {
@@ -58,19 +58,21 @@ export const TextInput: React.FC<TextInputProps> = ({
 
   return (
     <View className={`w-full mb-4 ${containerClassName}`}>
-      {label && (
+      {Boolean(label) ? (
         <View className="flex-row items-center mb-1.5">
           <Text className="text-sm font-semibold text-slate-700">{label}</Text>
-          {required && <Text className="text-sm font-bold text-red-500 ml-1">*</Text>}
+          {required ? (
+            <Text className="text-sm font-bold text-red-500 ml-1">*</Text>
+          ) : null}
         </View>
-      )}
+      ) : null}
 
       <View
         className={`flex-row items-center border rounded-xl px-3.5 py-2.5 transition-all ${getBorderColorClass()} ${
           isInputDisabled ? 'bg-slate-100 opacity-60' : ''
         }`}
       >
-        {leftIcon && <View className="mr-2.5">{leftIcon}</View>}
+        {leftIcon ? <View className="mr-2.5">{leftIcon}</View> : null}
 
         <RNTextInput
           accessibilityLabel={accessibilityLabel || label}
@@ -91,7 +93,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           {...props}
         />
 
-        {showClear && (
+        {showClear ? (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Clear input"
@@ -102,14 +104,14 @@ export const TextInput: React.FC<TextInputProps> = ({
               <Text className="text-white text-[10px] font-bold leading-none">✕</Text>
             </View>
           </TouchableOpacity>
-        )}
+        ) : null}
 
-        {rightIcon && <View className="ml-2">{rightIcon}</View>}
+        {rightIcon ? <View className="ml-2">{rightIcon}</View> : null}
       </View>
 
-      {error ? (
+      {Boolean(error) ? (
         <Text className="text-xs text-red-500 mt-1 font-medium">{error}</Text>
-      ) : helperText ? (
+      ) : Boolean(helperText) ? (
         <Text className="text-xs text-slate-500 mt-1">{helperText}</Text>
       ) : null}
     </View>

@@ -65,12 +65,12 @@ export const DateInput: React.FC<DateInputProps> = ({
 
   return (
     <View className={`w-full mb-4 ${containerClassName}`}>
-      {label && (
+      {Boolean(label) ? (
         <View className="flex-row items-center mb-1.5">
           <Text className="text-sm font-semibold text-slate-700">{label}</Text>
-          {required && <Text className="text-sm font-bold text-red-500 ml-1">*</Text>}
+          {required ? <Text className="text-sm font-bold text-red-500 ml-1">*</Text> : null}
         </View>
-      )}
+      ) : null}
 
       <TouchableOpacity
         accessibilityRole="button"
@@ -96,9 +96,9 @@ export const DateInput: React.FC<DateInputProps> = ({
         <Text className="text-slate-400 text-xs font-bold">Select</Text>
       </TouchableOpacity>
 
-      {error ? (
+      {Boolean(error) ? (
         <Text className="text-xs text-red-500 mt-1 font-medium">{error}</Text>
-      ) : helperText ? (
+      ) : Boolean(helperText) ? (
         <Text className="text-xs text-slate-500 mt-1">{helperText}</Text>
       ) : null}
 

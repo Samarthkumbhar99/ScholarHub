@@ -60,12 +60,12 @@ export const SelectInput: React.FC<SelectInputProps> = ({
 
   return (
     <View className={`w-full mb-4 ${containerClassName}`}>
-      {label && (
+      {Boolean(label) ? (
         <View className="flex-row items-center mb-1.5">
           <Text className="text-sm font-semibold text-slate-700">{label}</Text>
-          {required && <Text className="text-sm font-bold text-red-500 ml-1">*</Text>}
+          {required ? <Text className="text-sm font-bold text-red-500 ml-1">*</Text> : null}
         </View>
-      )}
+      ) : null}
 
       <TouchableOpacity
         accessibilityRole="combobox"
@@ -79,7 +79,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
         }`}
       >
         <View className="flex-row items-center flex-1 mr-2">
-          {leftIcon && <View className="mr-2.5">{leftIcon}</View>}
+          {leftIcon ? <View className="mr-2.5">{leftIcon}</View> : null}
           <Text
             className={`text-base ${
               selectedOption ? 'text-slate-900 font-medium' : 'text-slate-400'
@@ -92,9 +92,9 @@ export const SelectInput: React.FC<SelectInputProps> = ({
         <Text className="text-slate-400 text-xs font-bold">▼</Text>
       </TouchableOpacity>
 
-      {error ? (
+      {Boolean(error) ? (
         <Text className="text-xs text-red-500 mt-1 font-medium">{error}</Text>
-      ) : helperText ? (
+      ) : Boolean(helperText) ? (
         <Text className="text-xs text-slate-500 mt-1">{helperText}</Text>
       ) : null}
 
@@ -125,7 +125,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
             </View>
 
             {/* Optional Search Bar */}
-            {searchable && (
+            {searchable ? (
               <View className="p-3 border-b border-slate-100 bg-slate-50">
                 <View className="flex-row items-center bg-white border border-slate-200 rounded-xl px-3 py-2">
                   <Text className="text-slate-400 mr-2 text-xs">🔍</Text>
@@ -138,7 +138,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
                   />
                 </View>
               </View>
-            )}
+            ) : null}
 
             {/* Options List */}
             <FlatList
@@ -168,23 +168,23 @@ export const SelectInput: React.FC<SelectInputProps> = ({
                         >
                           {item.label}
                         </Text>
-                        {item.badge && (
+                        {item.badge ? (
                           <View className="ml-2 bg-emerald-100 px-2 py-0.5 rounded-full">
                             <Text className="text-[10px] font-bold text-emerald-800">
                               {item.badge}
                             </Text>
                           </View>
-                        )}
+                        ) : null}
                       </View>
-                      {item.description && (
+                      {item.description ? (
                         <Text className="text-xs text-slate-500 mt-0.5">
                           {item.description}
                         </Text>
-                      )}
+                      ) : null}
                     </View>
-                    {isSelected && (
+                    {isSelected ? (
                       <Text className="text-primary-600 font-bold text-base">✓</Text>
-                    )}
+                    ) : null}
                   </TouchableOpacity>
                 );
               }}

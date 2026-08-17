@@ -101,8 +101,8 @@ export const Badge: React.FC<BadgeProps> = ({
     <View
       className={`inline-flex flex-row items-center self-start border ${variantStyle.container} ${sizeStyle.container} ${className}`}
     >
-      {showDot && <View className={`rounded-full ${variantStyle.dot} ${sizeStyle.dot}`} />}
-      {icon && <View className="mr-1">{icon}</View>}
+      {showDot ? <View className={`rounded-full ${variantStyle.dot} ${sizeStyle.dot}`} /> : null}
+      {icon ? <View className="mr-1">{icon}</View> : null}
       {children ? (
         children
       ) : (

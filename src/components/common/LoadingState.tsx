@@ -22,16 +22,16 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       >
         <View className="p-6 rounded-3xl bg-white border border-slate-100 shadow-md shadow-slate-200 items-center max-w-[280px]">
           <ActivityIndicator size={size} color={color} />
-          {message && (
+          {Boolean(message) ? (
             <Text className="mt-4 text-base font-bold text-slate-800 text-center">
               {message}
             </Text>
-          )}
-          {subMessage && (
+          ) : null}
+          {Boolean(subMessage) ? (
             <Text className="mt-1 text-xs text-slate-500 text-center">
               {subMessage}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
     );
@@ -40,16 +40,16 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   return (
     <View className={`items-center justify-center p-6 my-4 ${className}`}>
       <ActivityIndicator size={size} color={color} />
-      {message && (
+      {Boolean(message) ? (
         <Text className="mt-3 text-sm font-semibold text-slate-700 text-center">
           {message}
         </Text>
-      )}
-      {subMessage && (
+      ) : null}
+      {Boolean(subMessage) ? (
         <Text className="mt-1 text-xs text-slate-400 text-center">
           {subMessage}
         </Text>
-      )}
+      ) : null}
     </View>
   );
 };

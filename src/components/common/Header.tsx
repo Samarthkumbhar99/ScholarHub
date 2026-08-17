@@ -40,15 +40,17 @@ export const Header: React.FC<HeaderProps> = ({
           <Text className="text-xl font-extrabold text-slate-900" numberOfLines={1}>
             {title}
           </Text>
-          {subtitle && (
+          {Boolean(subtitle) ? (
             <Text className="text-xs text-slate-500 font-medium mt-0.5" numberOfLines={1}>
               {subtitle}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
 
-      {rightAction && <View className="ml-2 flex-row items-center">{rightAction}</View>}
+      {Boolean(rightAction) ? (
+        <View className="ml-2 flex-row items-center">{rightAction}</View>
+      ) : null}
     </View>
   );
 };
