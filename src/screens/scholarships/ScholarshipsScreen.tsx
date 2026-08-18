@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StudentTabParamList } from '../../types/navigation';
@@ -8,227 +8,242 @@ import { toggleSaveScholarship } from '../../store/slices/scholarshipSlice';
 import {
   ScreenContainer,
   Header,
-  Card,
   Badge,
   EmptyState,
 } from '../../components/common';
+import { SearchInput } from '../../components/inputs';
+import { ScholarshipFilterState, ScholarshipItem, SortOption } from './types';
+import { MOCK_SCHOLARSHIPS } from './data/mockScholarships';
 import {
-  PrimaryButton,
-  OutlineButton,
-} from '../../components/buttons';
-import {
-  SearchInput,
-} from '../../components/inputs';
+  filterScholarships,
+  countActiveFilters,
+  initialFilterState,
+} from './utils/filterScholarships';
+import { ScholarshipCard } from './components/ScholarshipCard';
+import { FilterModal } from './components/FilterModal';
+import { ActiveFilterChips } from './components/ActiveFilterChips';
+import { SortSelector } from './components/SortSelector';
 
 type ScholarshipsNavProp = BottomTabNavigationProp<StudentTabParamList, 'Scholarships'>;
 
-interface ScholarshipItem {
-  id: string;
-  title: string;
-  provider: string;
-  amount: string;
-  deadline: string;
-  category: 'merit' | 'stem' | 'abroad' | 'need';
-  tags: string[];
-  daysLeft: number;
-}
-
-const SAMPLE_SCHOLARSHIPS: ScholarshipItem[] = [
-  {
-    id: 'sch_01',
-    title: 'Global Tech Innovators Fellowship',
-    provider: 'National Science Foundation',
-    amount: '$18,000 / year',
-    deadline: '2026-10-15',
-    category: 'stem',
-    tags: ['Computer Science', 'GPA 3.5+', 'Undergrad'],
-    daysLeft: 12,
-  },
-  {
-    id: 'sch_02',
-    title: 'Presidential Academic Excellence Grant',
-    provider: 'Higher Education Ministry',
-    amount: 'Full Tuition + Stipend',
-    deadline: '2026-09-30',
-    category: 'merit',
-    tags: ['All Majors', 'Merit-Based', 'Final Year'],
-    daysLeft: 4,
-  },
-  {
-    id: 'sch_03',
-    title: 'International Student Exchange Waiver',
-    provider: 'Oxford Global Foundation',
-    amount: '£12,500 One-time',
-    deadline: '2026-11-01',
-    category: 'abroad',
-    tags: ['Study Abroad', 'Europe', 'Postgrad'],
-    daysLeft: 28,
-  },
-  {
-    id: 'sch_04',
-    title: 'NextGen Women in Engineering Award',
-    provider: 'Tech Pioneers Council',
-    amount: '$10,000 / year',
-    deadline: '2026-10-30',
-    category: 'stem',
-    tags: ['Engineering', 'Diversity', 'All Levels'],
-    daysLeft: 20,
-  },
-];
-
+/**
+ * ScholarshipsScreen
+ * Enhanced Scholarship Discovery & Smart Filter Hub
+ */
 export const ScholarshipsScreen: React.FC = () => {
   const navigation = useNavigation<ScholarshipsNavProp>();
   const dispatch = useAppDispatch();
   const { savedScholarshipIds } = useAppSelector((state) => state.scholarships);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filter & Search State
+  const [filterState, setFilterState] = useState<ScholarshipFilterState>(initialFilterState);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  const categories = [
+  // Quick Category shortcuts on main screen
+  const [quickCategory, setQuickCategory] = useState<string>('all');
+
+  const quickCategories = [
     { key: 'all', label: 'All Grants' },
     { key: 'stem', label: 'STEM' },
-    { key: 'merit', label: 'Merit-Based' },
+    { key: 'merit', label: 'Merit' },
     { key: 'abroad', label: 'Study Abroad' },
-    { key: 'need', label: 'Need-Based' },
+    { key: 'gov', label: 'Govt. Schemes' },
   ];
 
-  const filteredScholarships = SAMPLE_SCHOLARSHIPS.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.provider.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'all' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Apply quick category preset
+  const handleSelectQuickCategory = (key: string) => {
+    setQuickCategory(key);
+    if (key === 'all') {
+      setFilterState((prev) => ({ ...prev, type: 'all', fieldOfStudy: 'all' }));
+    } else if (key === 'stem') {
+      setFilterState((prev) => ({ ...prev, fieldOfStudy: 'Engineering' }));
+    } else if (key === 'merit') {
+      setFilterState((prev) => ({ ...prev, minCGPA: 8.0 }));
+    } else if (key === 'abroad') {
+      setFilterState((prev) => ({ ...prev, type: 'international' }));
+    } else if (key === 'gov') {
+      setFilterState((prev) => ({ ...prev, type: 'government' }));
+    }
+  };
+
+  // Filter & Sort computation
+  const filteredScholarships = useMemo(() => {
+    return filterScholarships(MOCK_SCHOLARSHIPS, filterState);
+  }, [filterState]);
+
+  const activeFilterCount = useMemo(() => {
+    return countActiveFilters(filterState);
+  }, [filterState]);
+
+  // Actions
+  const handleToggleSave = (id: string) => {
+    dispatch(toggleSaveScholarship(id));
+  };
+
+  const handleApply = (_scholarship: ScholarshipItem) => {
+    navigation.navigate('Applications');
+  };
+
+  const handleDetails = (scholarship: ScholarshipItem) => {
+    Alert.alert(
+      scholarship.title,
+      `${scholarship.description}\n\n• Provider: ${scholarship.provider}\n• Award: ${scholarship.awardAmount}\n• Deadline: ${scholarship.deadline}\n• Match: ${scholarship.matchScore}%\n\nFull details screen will be available in the next module.`,
+      [{ text: 'Close', style: 'cancel' }, { text: 'Apply Now', onPress: () => handleApply(scholarship) }]
+    );
+  };
+
+  const handleSearchChange = (query: string) => {
+    setFilterState((prev) => ({ ...prev, searchQuery: query }));
+  };
+
+  const handleSortChange = (sortBy: SortOption) => {
+    setFilterState((prev) => ({ ...prev, sortBy }));
+  };
+
+  const handleRemoveSingleFilter = (key: keyof ScholarshipFilterState) => {
+    setFilterState((prev) => ({
+      ...prev,
+      [key]: key === 'type' || key === 'status' || key === 'funding' || key === 'fieldOfStudy' ? 'all' : undefined,
+    }));
+  };
+
+  const handleClearAllFilters = () => {
+    setFilterState(initialFilterState);
+    setQuickCategory('all');
+  };
 
   return (
     <ScreenContainer scrollable withSafeArea>
       {/* Header */}
       <Header
-        title="Scholarships Directory"
-        subtitle={`${filteredScholarships.length} opportunities available`}
+        title="Scholarship Directory"
+        subtitle={`${filteredScholarships.length} of ${MOCK_SCHOLARSHIPS.length} matching opportunities`}
+        rightAction={
+          <Badge
+            variant="primary"
+            size="sm"
+            label={`${filteredScholarships.length} Available`}
+          />
+        }
       />
 
-      {/* Search Input */}
-      <SearchInput
-        placeholder="Search by grant name, university, or major..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        clearable
-      />
+      {/* Search & Filter Bar Row */}
+      <View className="flex-row items-center gap-2.5 mb-2">
+        <View className="flex-1">
+          <SearchInput
+            placeholder="Search scholarships by name, provider, course..."
+            value={filterState.searchQuery}
+            onChangeText={handleSearchChange}
+            clearable
+            containerClassName="mb-0"
+          />
+        </View>
 
-      {/* Filter Chips */}
+        {/* Filter Modal Trigger Button */}
+        <TouchableOpacity
+          onPress={() => setIsFilterModalOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Open smart filters. ${activeFilterCount} active filters.`}
+          className={`h-12 px-3.5 rounded-xl border flex-row items-center justify-center ${
+            activeFilterCount > 0
+              ? 'bg-blue-50 border-primary-600 ring-2 ring-primary-100'
+              : 'bg-white border-slate-300 active:bg-slate-50'
+          }`}
+        >
+          <Text className="text-base mr-1">⚙️</Text>
+          <Text
+            className={`text-xs font-bold ${
+              activeFilterCount > 0 ? 'text-primary-700' : 'text-slate-700'
+            }`}
+          >
+            Filters
+          </Text>
+          {activeFilterCount > 0 && (
+            <View className="ml-1.5 bg-primary-600 h-5 min-w-[20px] px-1 rounded-full items-center justify-center">
+              <Text className="text-[10px] font-extrabold text-white">
+                {activeFilterCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Quick Category Presets Bar */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="mb-4 -mx-4 px-4"
+        className="mb-3 -mx-4 px-4"
       >
         <View className="flex-row gap-2 py-1">
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.key}
-              onPress={() => setSelectedCategory(cat.key)}
-              className={`px-3.5 py-1.5 rounded-xl border ${
-                selectedCategory === cat.key
-                  ? 'bg-primary-600 border-primary-600'
-                  : 'bg-white border-slate-200'
-              }`}
-            >
-              <Text
-                className={`text-xs font-bold ${
-                  selectedCategory === cat.key ? 'text-white' : 'text-slate-700'
+          {quickCategories.map((cat) => {
+            const isSelected = quickCategory === cat.key;
+            return (
+              <TouchableOpacity
+                key={cat.key}
+                onPress={() => handleSelectQuickCategory(cat.key)}
+                className={`px-3 py-1.5 rounded-xl border ${
+                  isSelected
+                    ? 'bg-primary-600 border-primary-600 shadow-sm'
+                    : 'bg-white border-slate-200'
                 }`}
               >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  className={`text-xs font-bold ${
+                    isSelected ? 'text-white' : 'text-slate-700'
+                  }`}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
+
+      {/* Active Filter Chips with 1-tap removal */}
+      <ActiveFilterChips
+        filter={filterState}
+        onRemoveFilter={handleRemoveSingleFilter}
+        onClearAll={handleClearAllFilters}
+      />
+
+      {/* Sort Option Pills */}
+      <SortSelector
+        currentSort={filterState.sortBy}
+        onSelectSort={handleSortChange}
+      />
 
       {/* Scholarships List */}
       {filteredScholarships.length === 0 ? (
         <EmptyState
           title="No Scholarships Found"
-          description="No grants match your current search query and filters."
-          actionTitle="Clear Filters"
-          onActionPress={() => {
-            setSearchQuery('');
-            setSelectedCategory('all');
-          }}
+          description="No scholarships matched your current search query and smart filters. Try loosening your criteria."
+          actionTitle="Clear All Filters"
+          onActionPress={handleClearAllFilters}
         />
       ) : (
-        <View className="gap-3.5 mb-6">
-          {filteredScholarships.map((sch) => {
-            const isSaved = savedScholarshipIds.includes(sch.id);
-            return (
-              <Card key={sch.id} variant="elevated" className="p-4">
-                <View className="flex-row items-start justify-between mb-2">
-                  <View className="flex-1 mr-2">
-                    <Text className="text-base font-bold text-slate-900 leading-snug">
-                      {sch.title}
-                    </Text>
-                    <Text className="text-xs text-slate-500 font-medium mt-0.5">
-                      {sch.provider}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => dispatch(toggleSaveScholarship(sch.id))}
-                    className={`h-9 w-9 rounded-xl items-center justify-center border ${
-                      isSaved
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'bg-slate-50 border-slate-200'
-                    }`}
-                  >
-                    <Text className="text-base">{isSaved ? '★' : '☆'}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Amount & Deadline */}
-                <View className="flex-row items-center justify-between py-2 border-y border-slate-100 mb-3">
-                  <View>
-                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                      Award Value
-                    </Text>
-                    <Text className="text-sm font-extrabold text-emerald-700">
-                      {sch.amount}
-                    </Text>
-                  </View>
-                  <Badge
-                    variant={sch.daysLeft <= 7 ? 'warning' : 'info'}
-                    size="sm"
-                    showDot
-                    label={`Closes in ${sch.daysLeft} days`}
-                  />
-                </View>
-
-                {/* Tags */}
-                <View className="flex-row flex-wrap gap-1.5 mb-3.5">
-                  {sch.tags.map((tag) => (
-                    <Badge key={tag} variant="neutral" size="sm" label={tag} />
-                  ))}
-                </View>
-
-                {/* Actions */}
-                <View className="flex-row gap-2">
-                  <View className="flex-1">
-                    <PrimaryButton
-                      title="Apply Now"
-                      size="sm"
-                      onPress={() => navigation.navigate('Applications')}
-                    />
-                  </View>
-                  <OutlineButton
-                    title="Details"
-                    size="sm"
-                    onPress={() => {}}
-                  />
-                </View>
-              </Card>
-            );
-          })}
+        <View className="pb-6">
+          {filteredScholarships.map((sch) => (
+            <ScholarshipCard
+              key={sch.id}
+              scholarship={sch}
+              isSaved={savedScholarshipIds.includes(sch.id)}
+              onToggleSave={handleToggleSave}
+              onDetails={handleDetails}
+              onApply={handleApply}
+            />
+          ))}
         </View>
       )}
+
+      {/* Smart Filter Modal */}
+      <FilterModal
+        visible={isFilterModalOpen}
+        filter={filterState}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={(newFilter) => setFilterState(newFilter)}
+        onReset={handleClearAllFilters}
+      />
     </ScreenContainer>
   );
 };
