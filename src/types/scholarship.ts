@@ -27,6 +27,11 @@ export interface Scholarship {
   minimumGpa?: number;
   matchScore?: number;
   featured?: boolean;
+  benefits?: string[];
+  requiredDocuments?: string[];
+  selectionProcess?: string[];
+  eligibleStates?: string[];
+  officialWebsite?: string;
 }
 
 export interface ScholarshipFilter {

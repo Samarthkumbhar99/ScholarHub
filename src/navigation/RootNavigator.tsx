@@ -4,6 +4,7 @@ import { RootStackParamList } from '../types/navigation';
 import { SplashScreen } from '../screens/splash';
 import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
+import { ScholarshipDetailsScreen } from '../screens/scholarships';
 import { ShowcaseScreen } from '../screens/ShowcaseScreen';
 import { FoundationScreen } from '../screens/FoundationScreen';
 
@@ -11,7 +12,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
  * RootNavigator
- * Top-level application navigator routing between Splash, Auth, and Student stacks
+ * Top-level application navigator routing between Splash, Auth, Student stacks, and Modal screens
  */
 export const RootNavigator: React.FC = () => {
   return (
@@ -36,6 +37,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="Student"
         component={StudentNavigator}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Full-Screen Scholarship Details View */}
+      <Stack.Screen
+        name="ScholarshipDetails"
+        component={ScholarshipDetailsScreen}
         options={{ animation: 'slide_from_right' }}
       />
 

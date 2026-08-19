@@ -43,6 +43,11 @@ export interface ScholarshipItem {
   tags: string[];
   officialWebsite?: string;
   featured?: boolean;
+  benefits?: string[];
+  requiredDocuments?: string[];
+  selectionProcess?: string[];
+  eligibleStates?: string[];
+  eligibleCountries?: string[];
 }
 
 /**

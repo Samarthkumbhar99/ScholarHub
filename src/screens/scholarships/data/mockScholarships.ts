@@ -2,7 +2,7 @@ import { ScholarshipItem } from '../types';
 
 /**
  * Mock Scholarships Dataset
- * Realistic scholarship repository for discovery, smart filtering, and search
+ * Realistic scholarship repository for discovery, smart filtering, and deep details
  */
 export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
   {
@@ -10,7 +10,7 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     title: 'National STEM Fellowship',
     provider: 'Department of Science & Higher Education',
     description:
-      'Premier government fellowship recognizing high-achieving undergraduate and postgraduate students pursuing STEM disciplines with research stipends.',
+      'Premier government fellowship recognizing high-achieving undergraduate and postgraduate students pursuing STEM disciplines with annual stipends and national laboratory access.',
     awardAmount: '₹120,000 / year',
     numericAmount: 120000,
     deadline: '2026-09-30',
@@ -26,13 +26,36 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     matchScore: 98,
     tags: ['Government', 'STEM', 'CGPA 8.0+', 'Closing Soon'],
     featured: true,
+    benefits: [
+      'Annual non-refundable grant of ₹120,000 disbursed directly into student bank account',
+      'Full tuition fee reimbursement for STEM degree programs in accredited institutes',
+      'Priority access to national computing labs and DST research facilities',
+      'Annual research publication & conference travel subsidy up to ₹25,000',
+    ],
+    requiredDocuments: [
+      'Valid Government Photo ID (Aadhaar Card / Voter ID)',
+      'Official marksheets of previous semester or 10+2 examinations (Min 80% / 8.0 CGPA)',
+      'Income Certificate issued by competent revenue authority (Below ₹6.0 Lakhs / annum)',
+      'Current College Enrollment Verification Certificate signed by Registrar / Dean',
+      'Bonafide student certificate and Institute Bank Account verification',
+    ],
+    selectionProcess: [
+      'Online application form submission on the official scholarship portal',
+      'Automated eligibility screening & academic merit verification',
+      'Shortlisting based on GPA, socio-economic category, and STEM discipline quota',
+      'Final verification of original documents by the State Nodal Officer',
+      'Electronic fund transfer (DBT) directly to Aadhaar-seeded bank account',
+    ],
+    eligibleStates: ['All States & Union Territories of India'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://scholarships.gov.in',
   },
   {
     id: 'sch_reliance_02',
     title: 'Reliance Foundation Undergraduate Scholarship',
     provider: 'Reliance Foundation Trust',
     description:
-      'Merit-cum-means scholarship supporting ambitious undergraduate students across computer science, technology, and engineering disciplines in India.',
+      'Merit-cum-means scholarship supporting ambitious undergraduate students across computer science, technology, and engineering disciplines with mentorship and funding.',
     awardAmount: '₹200,000 / year',
     numericAmount: 200000,
     deadline: '2026-10-15',
@@ -48,13 +71,36 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     matchScore: 94,
     tags: ['Private Grant', 'Engineering', 'Tech Leadership'],
     featured: true,
+    benefits: [
+      'Up to ₹200,000 per academic year for the entire duration of the undergraduate degree',
+      'Exclusive leadership development workshops and tech masterclasses with industry pioneers',
+      'Access to an active global alumni network and peer mentorship community',
+      'Internship opportunities across Reliance tech and innovation divisions',
+    ],
+    requiredDocuments: [
+      'Aadhaar Card of student and parent/guardian',
+      'Class 12th Board Marksheet & JEE / State CET entrance score card',
+      'Family Income Proof (ITR / Form 16 / Tehsildar Certificate)',
+      'College Fee Receipt & College Admission Confirmation Letter',
+      'Self-attested bank passbook / cancelled cheque',
+    ],
+    selectionProcess: [
+      'Online registration and mandatory 60-minute aptitude assessment',
+      'Application submission with academic records and personal essay',
+      'Shortlisting based on combined aptitude score and Class 12 performance',
+      'Panel interview with subject matter experts and leadership team',
+      'Scholarship conferment and annual renewal subject to maintaining 7.5 CGPA',
+    ],
+    eligibleStates: ['All Indian States'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://www.reliancefoundation.org',
   },
   {
     id: 'sch_oxford_03',
     title: 'Oxford Global Scholars Exchange Fellowship',
     provider: 'Oxford International Foundation',
     description:
-      'Prestigious international mobility grant enabling distinguished students to attend European university immersion programs with full tuition coverage.',
+      'Prestigious international mobility grant enabling distinguished students to attend European university immersion programs with full tuition coverage and airfare.',
     awardAmount: '£15,000 + Airfare',
     numericAmount: 1600000,
     deadline: '2026-11-01',
@@ -68,6 +114,28 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     status: 'open',
     matchScore: 91,
     tags: ['Study Abroad', 'Fully Funded', 'Europe', 'Global Merit'],
+    benefits: [
+      'Full overseas tuition coverage for 1 academic semester at host university in the UK / Europe',
+      '£15,000 living maintenance allowance covering campus accommodation and meals',
+      'Round-trip international flight tickets and visa application reimbursement',
+      'International health insurance coverage for the duration of stay',
+    ],
+    requiredDocuments: [
+      'Valid Passport with at least 18 months remaining validity',
+      'Official English academic transcripts from current university (Min CGPA 8.5)',
+      'Statement of Purpose (SOP) describing research/study objectives (800 words)',
+      'Two formal Letters of Recommendation (LOR) from university professors',
+      'Proof of English language proficiency (IELTS 7.0+ / TOEFL 100+ or equivalent)',
+    ],
+    selectionProcess: [
+      'Application submission with academic portfolio and SOP',
+      'Review by International Academic Admissions Committee',
+      'Shortlisted candidate interview via video conference',
+      'Formal offer letter and visa sponsorship documentation issuance',
+    ],
+    eligibleStates: ['Global'],
+    eligibleCountries: ['India', 'United States', 'United Kingdom', 'Germany', 'Canada', 'Australia'],
+    officialWebsite: 'https://www.ox.ac.uk/admissions',
   },
   {
     id: 'sch_central_04',
@@ -76,7 +144,7 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     description:
       'National scholarship scheme providing financial assistance to meritorious students from low-income families for pursuing college and university studies.',
     awardAmount: '₹20,000 / year',
-    numericAmount: 200000,
+    numericAmount: 20000,
     deadline: '2026-11-20',
     daysLeft: 45,
     type: 'government',
@@ -89,6 +157,26 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     status: 'open',
     matchScore: 89,
     tags: ['Government', 'All Streams', 'Income Under 4.5L'],
+    benefits: [
+      '₹12,000 per annum for the first three years of undergraduate college',
+      '₹20,000 per annum for postgraduate and professional degree 4th & 5th years',
+      'Renewable every year based on minimum 50% marks and 75% attendance',
+    ],
+    requiredDocuments: [
+      'Aadhaar Card linked with active bank account',
+      'Class 12th Board Marksheet showing ranking in the top 20th percentile',
+      'Income Certificate issued by Revenue Authority (Income below ₹4.5 Lakhs)',
+      'College Bonafide Certificate & Institute Admission Proof',
+    ],
+    selectionProcess: [
+      'Online application on National Scholarship Portal (NSP)',
+      'Institute-level verification of documents and enrollment',
+      'State education board merit list generation (top 20th percentile quota)',
+      'Ministry approval and DBT disbursement to Aadhaar bank account',
+    ],
+    eligibleStates: ['All Indian States & UTs'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://scholarships.gov.in',
   },
   {
     id: 'sch_tata_05',
@@ -110,6 +198,27 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     status: 'closing_soon',
     matchScore: 87,
     tags: ['Private Grant', 'Closing Soon', 'Mentorship'],
+    benefits: [
+      'One-time financial grant up to ₹50,000 towards institutional tuition and exam fees',
+      'Free subscription to career readiness learning modules and soft-skill courses',
+      'Mentorship sessions with senior Tata Capital professionals',
+    ],
+    requiredDocuments: [
+      'Student Identity Card & Aadhaar Card',
+      'Previous year academic marksheet (Min 60% aggregate)',
+      'Annual Income Certificate issued by Tehsildar / Salary slip of parents',
+      'Current year college fee receipt / Admission letter',
+      'Bank Account details (Passbook copy / Cancelled Cheque)',
+    ],
+    selectionProcess: [
+      'Application submission and initial document verification',
+      'Telephonic verification of applicant and family credentials',
+      'Virtual panel interview for shortlisted candidates',
+      'Final grant disbursement directly into applicant bank account',
+    ],
+    eligibleStates: ['All Indian States'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://www.tatacapital.com',
   },
   {
     id: 'sch_daad_06',
@@ -130,6 +239,27 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     status: 'open',
     matchScore: 85,
     tags: ['International', 'Germany', 'Monthly Stipend'],
+    benefits: [
+      'Monthly scholarship installment of €1,200 for living expenses in Germany',
+      'Travel allowance subsidy for international flights',
+      'Full health, accident, and personal liability insurance coverage',
+      'Free 2-month intensive German language preparation course prior to program',
+    ],
+    requiredDocuments: [
+      'Curriculum Vitae (CV) in European Europass format',
+      'Detailed research proposal / Study plan agreed with German host professor',
+      'Letter of confirmation from the academic host in Germany',
+      'Certified degree certificates and grade transcripts with translations',
+      'English proficiency certificate (TOEFL / IELTS) or German certificate',
+    ],
+    selectionProcess: [
+      'Submission on DAAD portal',
+      'Review by independent selection committee of German university professors',
+      'Notification of award decision within 6 weeks',
+    ],
+    eligibleStates: ['Global'],
+    eligibleCountries: ['India', 'Germany'],
+    officialWebsite: 'https://www.daad.de/en',
   },
   {
     id: 'sch_aicte_07',
@@ -151,6 +281,26 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     status: 'open',
     matchScore: 93,
     tags: ['Government', 'Women in STEM', 'Tuition Support'],
+    benefits: [
+      '₹50,000 per annum for every year of study towards tuition fee, books, equipment, and laptop',
+      'No cap on state quota; all eligible technical students covered under the scheme',
+    ],
+    requiredDocuments: [
+      'Aadhaar Card and Student Bank Passbook',
+      'Class 10th and 12th marksheet',
+      'Family Income Certificate issued by competent revenue authority (Under ₹8.0 Lakhs)',
+      'Admission confirmation letter issued by Centralized Admission Authority',
+      'Bonafide certificate from AICTE-approved College Principal',
+    ],
+    selectionProcess: [
+      'Online submission on National Scholarship Portal',
+      'Institute scrutiny and endorsement by College Head',
+      'State Directorate verification of enrollment',
+      'Direct Benefit Transfer (DBT) approval and fund release',
+    ],
+    eligibleStates: ['All Indian States & UTs'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://www.aicte-india.org',
   },
   {
     id: 'sch_infosys_08',
@@ -172,5 +322,24 @@ export const MOCK_SCHOLARSHIPS: ScholarshipItem[] = [
     matchScore: 96,
     tags: ['Private Grant', 'AI & Machine Learning', 'Mentorship'],
     featured: true,
+    benefits: [
+      'Annual research stipend of ₹150,000 for AI/ML prototyping and cloud computing credits',
+      '1-on-1 mentorship with Infosys Chief Technology Office researchers',
+      'Fast-track interview for Infosys Labs Research Scientist internships and placements',
+    ],
+    requiredDocuments: [
+      'College ID Card & Aadhaar Card',
+      'Academic transcripts showing minimum 8.5 CGPA in computer science coursework',
+      'GitHub repository link / Project whitepaper demonstrating AI/ML software development',
+      'Recommendation letter from Department Head or Project Guide',
+    ],
+    selectionProcess: [
+      'Online registration and technical code submission review',
+      'Technical presentation and project defense before AI research panel',
+      'Fellowship grant announcement and mentorship onboarding',
+    ],
+    eligibleStates: ['All Indian States'],
+    eligibleCountries: ['India'],
+    officialWebsite: 'https://www.infosys.com/infosys-foundation.html',
   },
 ];

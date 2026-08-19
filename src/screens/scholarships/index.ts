@@ -1,4 +1,5 @@
 export * from './ScholarshipsScreen';
+export * from './ScholarshipDetailsScreen';
 export * from './components/ScholarshipCard';
 export * from './components/MatchScoreBadge';
 export * from './components/FilterModal';

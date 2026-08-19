@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { StudentTabParamList } from '../../types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { toggleSaveScholarship } from '../../store/slices/scholarshipSlice';
 import {
@@ -85,11 +86,12 @@ export const ScholarshipsScreen: React.FC = () => {
   };
 
   const handleDetails = (scholarship: ScholarshipItem) => {
-    Alert.alert(
-      scholarship.title,
-      `${scholarship.description}\n\n• Provider: ${scholarship.provider}\n• Award: ${scholarship.awardAmount}\n• Deadline: ${scholarship.deadline}\n• Match: ${scholarship.matchScore}%\n\nFull details screen will be available in the next module.`,
-      [{ text: 'Close', style: 'cancel' }, { text: 'Apply Now', onPress: () => handleApply(scholarship) }]
-    );
+    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+    if (parentNav) {
+      parentNav.navigate('ScholarshipDetails', { scholarshipId: scholarship.id });
+    } else {
+      (navigation as any).navigate('ScholarshipDetails', { scholarshipId: scholarship.id });
+    }
   };
 
   const handleSearchChange = (query: string) => {

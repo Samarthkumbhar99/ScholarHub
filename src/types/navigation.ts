@@ -27,6 +27,7 @@ export type RootStackParamList = {
   Splash: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
   Student: NavigatorScreenParams<StudentTabParamList> | undefined;
+  ScholarshipDetails: { scholarshipId: string };
   Showcase: undefined;
   Foundation: undefined;
 };
