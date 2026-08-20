@@ -4,7 +4,11 @@ import { RootStackParamList } from '../types/navigation';
 import { SplashScreen } from '../screens/splash';
 import { AuthNavigator } from './AuthNavigator';
 import { StudentNavigator } from './StudentNavigator';
-import { ScholarshipDetailsScreen } from '../screens/scholarships';
+import {
+  ScholarshipDetailsScreen,
+  SavedScholarshipsScreen,
+  CompareScholarshipsScreen,
+} from '../screens/scholarships';
 import { ShowcaseScreen } from '../screens/ShowcaseScreen';
 import { FoundationScreen } from '../screens/FoundationScreen';
 
@@ -44,6 +48,20 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="ScholarshipDetails"
         component={ScholarshipDetailsScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Saved Scholarships View */}
+      <Stack.Screen
+        name="SavedScholarships"
+        component={SavedScholarshipsScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Compare Scholarships Matrix View */}
+      <Stack.Screen
+        name="CompareScholarships"
+        component={CompareScholarshipsScreen}
         options={{ animation: 'slide_from_right' }}
       />
 

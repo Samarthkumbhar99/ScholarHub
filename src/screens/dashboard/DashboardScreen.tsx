@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { StudentTabParamList } from '../../types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
 import { useAppSelector } from '../../hooks';
 import { ScreenContainer } from '../../components/common';
 import { DashboardStats } from './types';
@@ -21,11 +22,18 @@ type DashboardNavProp = BottomTabNavigationProp<StudentTabParamList, 'Dashboard'
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<DashboardNavProp>();
   const { user } = useAppSelector((state) => state.auth);
+  const { savedScholarshipIds } = useAppSelector((state) => state.scholarships);
 
   // Student greeting name from Redux or mock fallback
   const studentDisplayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
     : user?.name || 'Student';
+
+  // Dynamic statistics reflecting live Redux saved state
+  const dynamicStats: DashboardStats = {
+    ...MOCK_DASHBOARD_DATA.stats,
+    saved: savedScholarshipIds.length,
+  };
 
   // Navigation handlers
   const handleBrowseMatching = () => {
@@ -38,8 +46,16 @@ export const DashboardScreen: React.FC = () => {
 
   const handleStatPress = (statKey: keyof DashboardStats) => {
     switch (statKey) {
+      case 'saved': {
+        const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+        if (parentNav) {
+          parentNav.navigate('SavedScholarships');
+        } else {
+          (navigation as any).navigate('SavedScholarships');
+        }
+        break;
+      }
       case 'eligible':
-      case 'saved':
       case 'recommended':
         navigation.navigate('Scholarships');
         break;
@@ -82,7 +98,7 @@ export const DashboardScreen: React.FC = () => {
 
       {/* 3. Summary Statistics Grid (6 core metrics) */}
       <StatsGrid
-        stats={MOCK_DASHBOARD_DATA.stats}
+        stats={dynamicStats}
         onStatPress={handleStatPress}
       />
 

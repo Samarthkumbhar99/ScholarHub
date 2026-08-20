@@ -1,11 +1,15 @@
 export * from './ScholarshipsScreen';
 export * from './ScholarshipDetailsScreen';
+export * from './SavedScholarshipsScreen';
+export * from './CompareScholarshipsScreen';
 export * from './components/ScholarshipCard';
 export * from './components/MatchScoreBadge';
 export * from './components/FilterModal';
 export * from './components/ActiveFilterChips';
 export * from './components/SortSelector';
+export * from './components/CompareSelectionBar';
 export * from './types';
 export * from './data/mockScholarships';
 export * from './utils/filterScholarships';
 export { default } from './ScholarshipsScreen';
+

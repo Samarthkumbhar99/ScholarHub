@@ -41,15 +41,35 @@ export const scholarshipSlice = createSlice({
         state.savedScholarshipIds.push(id);
       }
     },
+    saveScholarship: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      if (!state.savedScholarshipIds.includes(id)) {
+        state.savedScholarshipIds.push(id);
+      }
+    },
+    removeSavedScholarship: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      state.savedScholarshipIds = state.savedScholarshipIds.filter((item) => item !== id);
+    },
     toggleCompareScholarship: (state, action: PayloadAction<string>) => {
       const id = action.payload;
       if (state.comparedScholarshipIds.includes(id)) {
         state.comparedScholarshipIds = state.comparedScholarshipIds.filter((item) => item !== id);
       } else {
-        if (state.comparedScholarshipIds.length < 4) {
+        if (state.comparedScholarshipIds.length < 3) {
           state.comparedScholarshipIds.push(id);
         }
       }
+    },
+    addToCompare: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      if (!state.comparedScholarshipIds.includes(id) && state.comparedScholarshipIds.length < 3) {
+        state.comparedScholarshipIds.push(id);
+      }
+    },
+    removeFromCompare: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      state.comparedScholarshipIds = state.comparedScholarshipIds.filter((item) => item !== id);
     },
     clearComparedScholarships: (state) => {
       state.comparedScholarshipIds = [];
@@ -74,7 +94,11 @@ export const {
   setScholarships,
   setSelectedScholarship,
   toggleSaveScholarship,
+  saveScholarship,
+  removeSavedScholarship,
   toggleCompareScholarship,
+  addToCompare,
+  removeFromCompare,
   clearComparedScholarships,
   setFilter,
   resetFilter,

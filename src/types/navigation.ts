@@ -28,6 +28,8 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
   Student: NavigatorScreenParams<StudentTabParamList> | undefined;
   ScholarshipDetails: { scholarshipId: string };
+  SavedScholarships: undefined;
+  CompareScholarships: undefined;
   Showcase: undefined;
   Foundation: undefined;
 };

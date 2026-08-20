@@ -11,6 +11,8 @@ interface ScholarshipCardProps {
   onToggleSave: (id: string) => void;
   onDetails: (scholarship: ScholarshipItem) => void;
   onApply: (scholarship: ScholarshipItem) => void;
+  isCompared?: boolean;
+  onToggleCompare?: (id: string) => void;
 }
 
 /**
@@ -23,6 +25,8 @@ export const ScholarshipCard: React.FC<ScholarshipCardProps> = ({
   onToggleSave,
   onDetails,
   onApply,
+  isCompared = false,
+  onToggleCompare,
 }) => {
   const isUrgent = scholarship.daysLeft <= 7;
 
@@ -104,7 +108,7 @@ export const ScholarshipCard: React.FC<ScholarshipCardProps> = ({
       </View>
 
       {/* Action Buttons */}
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-2 items-center">
         <View className="flex-1">
           <PrimaryButton
             title="Apply Now"
@@ -117,6 +121,27 @@ export const ScholarshipCard: React.FC<ScholarshipCardProps> = ({
           size="sm"
           onPress={() => onDetails(scholarship)}
         />
+        {Boolean(onToggleCompare) ? (
+          <TouchableOpacity
+            onPress={() => onToggleCompare!(scholarship.id)}
+            accessibilityRole="button"
+            accessibilityLabel={isCompared ? 'Remove from compare' : 'Add to compare'}
+            className={`px-3 py-2 rounded-xl border flex-row items-center justify-center ${
+              isCompared
+                ? 'bg-indigo-50 border-indigo-400 shadow-sm'
+                : 'bg-slate-50 border-slate-200 active:bg-slate-100'
+            }`}
+          >
+            <Text className="text-xs mr-1">{isCompared ? '✓' : '⚖️'}</Text>
+            <Text
+              className={`text-xs font-bold ${
+                isCompared ? 'text-indigo-700' : 'text-slate-600'
+              }`}
+            >
+              {isCompared ? 'Compared' : 'Compare'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </Card>
   );
