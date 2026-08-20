@@ -23,16 +23,18 @@ export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<DashboardNavProp>();
   const { user } = useAppSelector((state) => state.auth);
   const { savedScholarshipIds } = useAppSelector((state) => state.scholarships);
+  const { items: applicationItems } = useAppSelector((state) => state.applications);
 
   // Student greeting name from Redux or mock fallback
   const studentDisplayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
     : user?.name || 'Student';
 
-  // Dynamic statistics reflecting live Redux saved state
+  // Dynamic statistics reflecting live Redux saved & application state
   const dynamicStats: DashboardStats = {
     ...MOCK_DASHBOARD_DATA.stats,
     saved: savedScholarshipIds.length,
+    applied: applicationItems.length,
   };
 
   // Navigation handlers

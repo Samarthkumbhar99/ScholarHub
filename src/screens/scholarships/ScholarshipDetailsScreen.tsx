@@ -15,6 +15,7 @@ import {
   toggleSaveScholarship,
   toggleCompareScholarship,
 } from '../../store/slices/scholarshipSlice';
+import { createOrGetApplication } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
   Header,
@@ -107,8 +108,21 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   };
 
   const handleApplyNow = () => {
-    // Navigate to Applications tab via Root -> Student
-    navigation.navigate('Student', { screen: 'Applications' } as any);
+    dispatch(
+      createOrGetApplication({
+        scholarshipId: scholarship.id,
+        scholarshipTitle: scholarship.title,
+        provider: scholarship.provider,
+        awardAmount: scholarship.awardAmount,
+        deadline: scholarship.deadline,
+        matchScore: scholarship.matchScore,
+        requiredDocuments: scholarship.requiredDocuments,
+      })
+    );
+
+    navigation.navigate('ApplicationDetails', {
+      applicationId: `app_${scholarship.id}`,
+    });
   };
 
   const handleOpenOfficialWebsite = async () => {

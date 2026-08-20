@@ -9,6 +9,7 @@ import {
   toggleSaveScholarship,
   toggleCompareScholarship,
 } from '../../store/slices/scholarshipSlice';
+import { createOrGetApplication } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
   Header,
@@ -98,8 +99,29 @@ export const ScholarshipsScreen: React.FC = () => {
     dispatch(toggleCompareScholarship(id));
   };
 
-  const handleApply = (_scholarship: ScholarshipItem) => {
-    navigation.navigate('Applications');
+  const handleApply = (scholarship: ScholarshipItem) => {
+    dispatch(
+      createOrGetApplication({
+        scholarshipId: scholarship.id,
+        scholarshipTitle: scholarship.title,
+        provider: scholarship.provider,
+        awardAmount: scholarship.awardAmount,
+        deadline: scholarship.deadline,
+        matchScore: scholarship.matchScore,
+        requiredDocuments: scholarship.requiredDocuments,
+      })
+    );
+
+    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+    if (parentNav) {
+      parentNav.navigate('ApplicationDetails', {
+        applicationId: `app_${scholarship.id}`,
+      });
+    } else {
+      (navigation as any).navigate('ApplicationDetails', {
+        applicationId: `app_${scholarship.id}`,
+      });
+    }
   };
 
   const handleDetails = (scholarship: ScholarshipItem) => {

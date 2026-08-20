@@ -30,6 +30,7 @@ export type RootStackParamList = {
   ScholarshipDetails: { scholarshipId: string };
   SavedScholarships: undefined;
   CompareScholarships: undefined;
+  ApplicationDetails: { applicationId: string };
   Showcase: undefined;
   Foundation: undefined;
 };

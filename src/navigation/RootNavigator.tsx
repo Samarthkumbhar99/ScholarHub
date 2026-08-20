@@ -9,6 +9,7 @@ import {
   SavedScholarshipsScreen,
   CompareScholarshipsScreen,
 } from '../screens/scholarships';
+import { ApplicationDetailsScreen } from '../screens/applications';
 import { ShowcaseScreen } from '../screens/ShowcaseScreen';
 import { FoundationScreen } from '../screens/FoundationScreen';
 
@@ -62,6 +63,13 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen
         name="CompareScholarships"
         component={CompareScholarshipsScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Application Details / 7-Stage Tracker View */}
+      <Stack.Screen
+        name="ApplicationDetails"
+        component={ApplicationDetailsScreen}
         options={{ animation: 'slide_from_right' }}
       />
 
