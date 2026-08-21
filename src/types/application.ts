@@ -143,21 +143,8 @@ export interface ApplicationItem {
   notes?: string;
 }
 
-export type DocumentType =
-  | 'transcript'
-  | 'resume'
-  | 'recommendation_letter'
-  | 'essay'
-  | 'financial_proof'
-  | 'id_card';
+import { DocumentType, DocumentItem } from './document';
 
-export interface StudentDocument {
-  id: string;
-  userId: string;
-  name: string;
-  fileUrl: string;
-  documentType: DocumentType;
-  fileSizeBytes: number;
-  uploadedAt: string;
-  isVerified: boolean;
-}
+// Re-export for convenience
+export type { DocumentType, DocumentItem };
+

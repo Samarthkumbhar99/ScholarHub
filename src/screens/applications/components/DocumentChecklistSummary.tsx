@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text } from 'react-native';
+import { useAppSelector } from '../../../hooks';
 import { Card, Badge } from '../../../components/common';
-import { OutlineButton } from '../../../components/buttons';
+import { OutlineButton, PrimaryButton } from '../../../components/buttons';
+import { checkApplicationDocumentReadiness } from '../../../utils/documentUtils';
 
 interface DocumentChecklistSummaryProps {
   requiredDocuments: string[];
@@ -10,64 +12,115 @@ interface DocumentChecklistSummaryProps {
 
 /**
  * DocumentChecklistSummary
- * Summarizes required documents when in PREPARING_DOCUMENTS stage, linking to Document Repository
+ * Dynamically computes document readiness for an application by synchronizing
+ * scholarship requirements with the centralized Redux student document repository.
  */
 export const DocumentChecklistSummary: React.FC<DocumentChecklistSummaryProps> = ({
   requiredDocuments,
   onOpenDocumentCenter,
 }) => {
-  // Mock realistic checklist state for documents
-  const documentItems = requiredDocuments.map((doc, idx) => ({
-    name: doc,
-    isReady: idx % 3 !== 1, // mock majority ready, 1 pending for realism
-  }));
+  const studentDocuments = useAppSelector((state) => state.documents.items);
 
-  const readyCount = documentItems.filter((d) => d.isReady).length;
+  // Compute live readiness evaluation
+  const readiness = useMemo(() => {
+    return checkApplicationDocumentReadiness(requiredDocuments, studentDocuments);
+  }, [requiredDocuments, studentDocuments]);
+
+  if (!requiredDocuments || requiredDocuments.length === 0) {
+    return null;
+  }
 
   return (
-    <Card variant="elevated" className="p-4 mb-4 border border-amber-200 bg-amber-50/30">
+    <Card
+      variant="elevated"
+      className={`p-4 mb-4 border ${
+        readiness.isAllReady
+          ? 'border-emerald-200 bg-emerald-50/20'
+          : 'border-amber-200 bg-amber-50/30'
+      }`}
+    >
+      {/* Header */}
       <View className="flex-row items-center justify-between mb-2.5">
-        <View className="flex-row items-center gap-1.5">
+        <View className="flex-row items-center gap-1.5 flex-1 mr-2">
           <Text className="text-base">📄</Text>
           <Text className="text-sm font-extrabold text-slate-900">
-            Required Documents Checklist
+            Required Documents
           </Text>
         </View>
         <Badge
-          variant={readyCount === documentItems.length ? 'success' : 'warning'}
+          variant={readiness.isAllReady ? 'success' : 'warning'}
           size="sm"
-          label={`${readyCount}/${documentItems.length} Ready`}
+          label={`${readiness.uploadedCount} / ${readiness.totalRequired} Ready`}
         />
       </View>
 
+      {/* Dynamic Readiness Banner */}
+      <View
+        className={`p-2.5 rounded-xl mb-3 flex-row items-center justify-between ${
+          readiness.isAllReady
+            ? 'bg-emerald-100/70 border border-emerald-200'
+            : 'bg-amber-100/70 border border-amber-200'
+        }`}
+      >
+        <View className="flex-row items-center flex-1 mr-2">
+          <Text className="mr-2 text-sm">
+            {readiness.isAllReady ? '🎉' : '⏳'}
+          </Text>
+          <Text
+            className={`text-xs font-bold ${
+              readiness.isAllReady ? 'text-emerald-900' : 'text-amber-900'
+            }`}
+          >
+            {readiness.statusSummary}
+          </Text>
+        </View>
+        <Text
+          className={`text-xs font-black ${
+            readiness.isAllReady ? 'text-emerald-800' : 'text-amber-800'
+          }`}
+        >
+          {readiness.readinessPercentage}%
+        </Text>
+      </View>
+
       <Text className="text-xs text-slate-600 mb-3">
-        Ensure all required certificates, marksheets, and proof documents are uploaded to your repository before applying.
+        Documents in your Document Center are automatically cross-referenced with this application's requirements.
       </Text>
 
-      {/* Checklist items */}
+      {/* Dynamic Checklist Items */}
       <View className="gap-2 mb-3.5">
-        {documentItems.map((doc, idx) => (
+        {readiness.items.map((item, idx) => (
           <View
             key={idx}
-            className="flex-row items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs"
+            className={`flex-row items-center justify-between p-2.5 rounded-xl bg-white border ${
+              item.isUploaded ? 'border-slate-200' : 'border-amber-200'
+            } shadow-2xs`}
           >
             <View className="flex-row items-center flex-1 mr-2">
-              <Text className="mr-2 text-sm">
-                {doc.isReady ? '✅' : '⏳'}
+              <Text className="mr-2 text-sm font-bold">
+                {item.isUploaded ? '✓' : '✗'}
               </Text>
-              <Text
-                className={`text-xs font-semibold ${
-                  doc.isReady ? 'text-slate-800' : 'text-amber-800'
-                }`}
-                numberOfLines={1}
-              >
-                {doc.name}
-              </Text>
+              <View className="flex-1">
+                <Text
+                  className={`text-xs font-semibold ${
+                    item.isUploaded ? 'text-slate-800' : 'text-amber-900'
+                  }`}
+                  numberOfLines={1}
+                >
+                  {item.name}
+                </Text>
+                {item.isUploaded && item.matchedDoc?.fileName ? (
+                  <Text className="text-[10px] text-slate-400 mt-0.5" numberOfLines={1}>
+                    {item.matchedDoc.fileName} • {item.matchedDoc.fileSize || 'Attached'}
+                  </Text>
+                ) : null}
+              </View>
             </View>
+
             <Badge
-              variant={doc.isReady ? 'success' : 'warning'}
+              variant={item.isUploaded ? 'success' : 'warning'}
               size="sm"
-              label={doc.isReady ? 'Verified' : 'Pending'}
+              label={item.isUploaded ? 'Uploaded' : 'Missing'}
             />
           </View>
         ))}
