@@ -8,6 +8,7 @@ import { ApplicationsScreen } from '../screens/applications';
 import { DocumentsScreen } from '../screens/documents';
 import { NotificationsScreen } from '../screens/notifications';
 import { ProfileScreen } from '../screens/profile';
+import { useAppSelector } from '../hooks';
 import { colors } from '../theme';
 
 const Tab = createBottomTabNavigator<StudentTabParamList>();
@@ -17,6 +18,8 @@ const Tab = createBottomTabNavigator<StudentTabParamList>();
  * Bottom tab bar containing all student-facing features
  */
 export const StudentNavigator: React.FC = () => {
+  const unreadCount = useAppSelector((state) => state.notifications.unreadCount);
+
   return (
     <Tab.Navigator
       initialRouteName="Dashboard"
@@ -96,7 +99,7 @@ export const StudentNavigator: React.FC = () => {
         component={NotificationsScreen}
         options={{
           tabBarLabel: 'Alerts',
-          tabBarBadge: 2,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: colors.status.error,
             fontSize: 9,
@@ -112,5 +115,6 @@ export const StudentNavigator: React.FC = () => {
     </Tab.Navigator>
   );
 };
+
 
 export default StudentNavigator;

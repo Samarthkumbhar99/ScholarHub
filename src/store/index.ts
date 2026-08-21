@@ -4,6 +4,7 @@ import authReducer from './slices/authSlice';
 import scholarshipReducer from './slices/scholarshipSlice';
 import applicationReducer from './slices/applicationSlice';
 import documentReducer from './slices/documentSlice';
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,12 +13,14 @@ export const store = configureStore({
     scholarships: scholarshipReducer,
     applications: applicationReducer,
     documents: documentReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
 });
+
 
 
 export type RootState = ReturnType<typeof store.getState>;
