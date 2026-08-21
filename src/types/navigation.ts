@@ -31,9 +31,20 @@ export type RootStackParamList = {
   SavedScholarships: undefined;
   CompareScholarships: undefined;
   ApplicationDetails: { applicationId: string };
+  EditProfile: { section?: 'personal' | 'academic' | 'category' | 'preferences' } | undefined;
+  Settings: undefined;
+  PrivacyPolicy: undefined;
+  TermsOfService: undefined;
+  HelpSupport: undefined;
+  StudyAbroad: undefined;
+  CountryDetails: { countryId: string };
+  UniversityDetails: { universityId: string };
+  CourseDetails: { courseId: string };
   Showcase: undefined;
   Foundation: undefined;
 };
+
+
 
 declare global {
   namespace ReactNavigation {

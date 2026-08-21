@@ -5,6 +5,8 @@ export * from './navigation';
 export * from './registration';
 export * from './document';
 export * from './notification';
+export * from './studyAbroad';
+
 
 
 

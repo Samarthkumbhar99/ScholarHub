@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList, RootStackParamList } from '../../types/navigation';
 import { useAppDispatch } from '../../hooks';
-import { setCredentials } from '../../store/slices/authSlice';
+import { setCredentials, initialMockProfile } from '../../store/slices/authSlice';
 import {
   ScreenContainer,
   Card,
@@ -91,24 +91,14 @@ export const LoginScreen: React.FC = () => {
     // Mock authentication process
     setTimeout(() => {
       setIsLoading(false);
+      const userEmail = loginMode === 'email' ? email.trim() : `${mobile.trim()}@mobile.scholarhub.edu`;
       dispatch(
         setCredentials({
           token: 'jwt-mock-session-token',
           user: {
+            ...initialMockProfile,
             id: 'usr_student_01',
-            email: loginMode === 'email' ? email.trim() : `${mobile.trim()}@mobile.scholarhub.edu`,
-            firstName: 'Alex',
-            lastName: 'Morgan',
-            name: 'Alex Morgan',
-            role: 'student',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            educationLevel: 'undergraduate',
-            major: 'Computer Science',
-            gpa: 3.82,
-            country: 'United States',
-            isProfileComplete: true,
-            createdAt: '2026-01-15T00:00:00Z',
-            updatedAt: '2026-08-17T00:00:00Z',
+            email: userEmail,
           },
         })
       );
@@ -129,22 +119,7 @@ export const LoginScreen: React.FC = () => {
       dispatch(
         setCredentials({
           token: 'jwt-demo-student-token',
-          user: {
-            id: 'usr_demo_student',
-            email: 'alex.morgan@university.edu',
-            firstName: 'Alex',
-            lastName: 'Morgan',
-            name: 'Alex Morgan',
-            role: 'student',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            educationLevel: 'undergraduate',
-            major: 'Computer Science',
-            gpa: 3.82,
-            country: 'United States',
-            isProfileComplete: true,
-            createdAt: '2026-01-15T00:00:00Z',
-            updatedAt: '2026-08-17T00:00:00Z',
-          },
+          user: initialMockProfile,
         })
       );
       if (parentNavigation) {

@@ -320,9 +320,20 @@ export const RegistrationScreen: React.FC = () => {
         gpa: parseFloat(formState.academic.cgpa) || 3.8,
         country: formState.academic.country || 'India',
         isProfileComplete: true,
+        isVerified: true,
+        personal: { ...formState.personal },
+        academic: { ...formState.academic },
+        preferences: { ...formState.preferences },
+        settings: {
+          notificationsEnabled: true,
+          deadlineRemindersEnabled: true,
+          emailAlertsEnabled: true,
+          language: 'English (US)',
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
 
       // Set Redux authentication session
       dispatch(
