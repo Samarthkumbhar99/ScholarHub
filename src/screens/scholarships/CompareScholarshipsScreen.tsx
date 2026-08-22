@@ -85,7 +85,7 @@ export const CompareScholarshipsScreen: React.FC = () => {
   };
 
   const handleExplore = () => {
-    navigation.navigate('Student', { screen: 'Scholarships' } as any);
+    navigation.navigate('Student', { screen: 'Scholarships' });
   };
 
   // Helper formatting functions with strict "Not specified" fallbacks

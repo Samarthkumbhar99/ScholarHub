@@ -61,7 +61,7 @@ export const SavedScholarshipsScreen: React.FC = () => {
 
   const handleExplore = () => {
     // Navigate to student scholarships tab
-    navigation.navigate('Student', { screen: 'Scholarships' } as any);
+    navigation.navigate('Student', { screen: 'Scholarships' });
   };
 
   return (

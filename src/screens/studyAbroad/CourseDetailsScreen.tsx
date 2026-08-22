@@ -9,6 +9,7 @@ import {
   Header,
   Card,
   Badge,
+  EmptyState,
 } from '../../components/common';
 import { PrimaryButton, OutlineButton } from '../../components/buttons';
 
@@ -29,13 +30,17 @@ export const CourseDetailsScreen: React.FC = () => {
 
   if (!course) {
     return (
-      <ScreenContainer withSafeArea contentContainerClassName="p-4 items-center justify-center">
-        <Text className="text-base font-bold text-slate-900 mb-2">
-          Course Not Found
-        </Text>
-        <OutlineButton
-          title="← Back"
-          onPress={() => navigation.goBack()}
+      <ScreenContainer withSafeArea contentContainerClassName="p-4">
+        <Header
+          title="Course Details"
+          showBack
+          onBackPress={() => navigation.goBack()}
+        />
+        <EmptyState
+          title="Course Not Found"
+          description="The degree program profile you are looking for is unavailable or has an invalid identifier."
+          actionTitle="← Back"
+          onActionPress={() => navigation.goBack()}
         />
       </ScreenContainer>
     );

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Scholarship, ScholarshipFilter } from '../../types';
+import { MOCK_SCHOLARSHIPS } from '../../screens/scholarships/data/mockScholarships';
 
 export interface ScholarshipState {
   items: Scholarship[];
@@ -12,7 +13,7 @@ export interface ScholarshipState {
 }
 
 const initialState: ScholarshipState = {
-  items: [],
+  items: MOCK_SCHOLARSHIPS,
   selectedScholarship: null,
   savedScholarshipIds: [],
   comparedScholarshipIds: [],
@@ -20,6 +21,7 @@ const initialState: ScholarshipState = {
   isLoading: false,
   error: null,
 };
+
 
 export const scholarshipSlice = createSlice({
   name: 'scholarships',

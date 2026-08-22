@@ -94,7 +94,7 @@ export const ApplicationDetailsScreen: React.FC = () => {
   };
 
   const handleOpenDocumentCenter = () => {
-    navigation.navigate('Student', { screen: 'Documents' } as any);
+    navigation.navigate('Student', { screen: 'Documents' });
   };
 
   return (

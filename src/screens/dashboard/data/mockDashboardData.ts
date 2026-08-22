@@ -21,10 +21,10 @@ export const MOCK_DASHBOARD_DATA: DashboardData = {
     matchedMajor: 'Computer Science & Engineering',
   },
   urgentDeadline: {
-    id: 'sch_stem_urgent',
+    id: 'sch_stem_01',
     title: 'National STEM Fellowship',
     provider: 'Department of Science & Higher Education',
-    awardValue: '₹12,000 / year',
+    awardValue: '₹120,000 / year',
     deadlineDate: 'Sept 30, 2026',
     daysLeft: 3,
     tag: 'STEM Merit Grant',

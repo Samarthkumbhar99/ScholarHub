@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
+import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   setFilterTab,
@@ -29,7 +27,7 @@ import {
 import { MatchScoreBadge } from '../scholarships/components/MatchScoreBadge';
 import { ApplicationStatusBadge } from './components/ApplicationStatusBadge';
 
-type ApplicationsTabNavProp = BottomTabNavigationProp<StudentTabParamList, 'Applications'>;
+type ApplicationsTabNavProp = StudentTabScreenNavigationProp<'Applications'>;
 
 /**
  * ApplicationsScreen
@@ -63,12 +61,7 @@ export const ApplicationsScreen: React.FC = () => {
   }, [items]);
 
   const handleOpenTracker = (applicationId: string) => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('ApplicationDetails', { applicationId });
-    } else {
-      (navigation as any).navigate('ApplicationDetails', { applicationId });
-    }
+    navigation.navigate('ApplicationDetails', { applicationId });
   };
 
   const handleBrowseScholarships = () => {

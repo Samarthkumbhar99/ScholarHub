@@ -21,6 +21,7 @@ import {
   Header,
   Card,
   Badge,
+  EmptyState,
 } from '../../components/common';
 import { PrimaryButton, OutlineButton } from '../../components/buttons';
 import { CourseCard, CourseDetailsModal } from './components';
@@ -54,13 +55,17 @@ export const UniversityDetailsScreen: React.FC = () => {
 
   if (!university) {
     return (
-      <ScreenContainer withSafeArea contentContainerClassName="p-4 items-center justify-center">
-        <Text className="text-base font-bold text-slate-900 mb-2">
-          University Not Found
-        </Text>
-        <OutlineButton
-          title="← Back to Study Abroad"
-          onPress={() => navigation.goBack()}
+      <ScreenContainer withSafeArea contentContainerClassName="p-4">
+        <Header
+          title="University Details"
+          showBack
+          onBackPress={() => navigation.goBack()}
+        />
+        <EmptyState
+          title="University Not Found"
+          description="The university institutional profile you are looking for is unavailable or has an invalid identifier."
+          actionTitle="← Back to Study Abroad"
+          onActionPress={() => navigation.goBack()}
         />
       </ScreenContainer>
     );

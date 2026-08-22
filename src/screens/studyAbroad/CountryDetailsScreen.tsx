@@ -12,6 +12,7 @@ import {
   Header,
   Card,
   Badge,
+  EmptyState,
 } from '../../components/common';
 import { OutlineButton } from '../../components/buttons';
 import { UniversityCard } from './components/UniversityCard';
@@ -37,13 +38,17 @@ export const CountryDetailsScreen: React.FC = () => {
 
   if (!country) {
     return (
-      <ScreenContainer withSafeArea contentContainerClassName="p-4 items-center justify-center">
-        <Text className="text-base font-bold text-slate-900 mb-2">
-          Country Not Found
-        </Text>
-        <OutlineButton
-          title="← Back to Study Abroad"
-          onPress={() => navigation.goBack()}
+      <ScreenContainer withSafeArea contentContainerClassName="p-4">
+        <Header
+          title="Country Details"
+          showBack
+          onBackPress={() => navigation.goBack()}
+        />
+        <EmptyState
+          title="Country Not Found"
+          description="The country destination profile you are looking for is unavailable or has an invalid identifier."
+          actionTitle="← Back to Study Abroad"
+          onActionPress={() => navigation.goBack()}
         />
       </ScreenContainer>
     );

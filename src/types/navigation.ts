@@ -1,4 +1,6 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
+import { NavigatorScreenParams, CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 /**
  * Authentication Stack Routes
@@ -44,10 +46,25 @@ export type RootStackParamList = {
   Foundation: undefined;
 };
 
+/**
+ * Composite Navigation Prop for Student Tab Screens
+ * Allows tab screens to navigate seamlessly to both sister tabs and parent root stack screens.
+ */
+export type StudentTabScreenNavigationProp<T extends keyof StudentTabParamList> =
+  CompositeNavigationProp<
+    BottomTabNavigationProp<StudentTabParamList, T>,
+    NativeStackNavigationProp<RootStackParamList>
+  >;
 
+/**
+ * Root Stack Screen Navigation Prop
+ */
+export type RootStackScreenNavigationProp<T extends keyof RootStackParamList> =
+  NativeStackNavigationProp<RootStackParamList, T>;
 
 declare global {
   namespace ReactNavigation {
     interface RootParamList extends RootStackParamList {}
   }
 }
+

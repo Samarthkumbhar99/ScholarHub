@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
+import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   markNotificationRead,
@@ -26,10 +24,7 @@ import { PrimaryButton, OutlineButton } from '../../components/buttons';
 import { NotificationCard } from './components';
 import { groupNotificationsByDate } from '../../utils/notificationUtils';
 
-type NotificationsTabNavProp = BottomTabNavigationProp<
-  StudentTabParamList,
-  'Notifications'
->;
+type NotificationsTabNavProp = StudentTabScreenNavigationProp<'Notifications'>;
 
 /**
  * NotificationsScreen
@@ -64,46 +59,25 @@ export const NotificationsScreen: React.FC = () => {
     }
 
     // 2. Perform contextual routing
-    const parentNav =
-      navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-
     switch (notification.type) {
       case 'DEADLINE_REMINDER': {
         if (notification.scholarshipId) {
-          if (parentNav) {
-            parentNav.navigate('ScholarshipDetails', {
-              scholarshipId: notification.scholarshipId,
-            });
-          } else {
-            (navigation as any).navigate('ScholarshipDetails', {
-              scholarshipId: notification.scholarshipId,
-            });
-          }
+          navigation.navigate('ScholarshipDetails', {
+            scholarshipId: notification.scholarshipId,
+          });
         } else if (notification.applicationId) {
-          if (parentNav) {
-            parentNav.navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          } else {
-            (navigation as any).navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          }
+          navigation.navigate('ApplicationDetails', {
+            applicationId: notification.applicationId,
+          });
         }
         break;
       }
 
       case 'NEW_SCHOLARSHIP': {
         if (notification.scholarshipId) {
-          if (parentNav) {
-            parentNav.navigate('ScholarshipDetails', {
-              scholarshipId: notification.scholarshipId,
-            });
-          } else {
-            (navigation as any).navigate('ScholarshipDetails', {
-              scholarshipId: notification.scholarshipId,
-            });
-          }
+          navigation.navigate('ScholarshipDetails', {
+            scholarshipId: notification.scholarshipId,
+          });
         } else {
           navigation.navigate('Scholarships');
         }
@@ -114,15 +88,9 @@ export const NotificationsScreen: React.FC = () => {
       case 'RESULT':
       case 'INTERVIEW': {
         if (notification.applicationId) {
-          if (parentNav) {
-            parentNav.navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          } else {
-            (navigation as any).navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          }
+          navigation.navigate('ApplicationDetails', {
+            applicationId: notification.applicationId,
+          });
         } else {
           navigation.navigate('Applications');
         }
@@ -131,15 +99,9 @@ export const NotificationsScreen: React.FC = () => {
 
       case 'MISSING_DOCUMENT': {
         if (notification.applicationId) {
-          if (parentNav) {
-            parentNav.navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          } else {
-            (navigation as any).navigate('ApplicationDetails', {
-              applicationId: notification.applicationId,
-            });
-          }
+          navigation.navigate('ApplicationDetails', {
+            applicationId: notification.applicationId,
+          });
         } else {
           navigation.navigate('Documents');
         }

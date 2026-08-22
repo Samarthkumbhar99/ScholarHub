@@ -47,7 +47,7 @@ export const SettingsScreen: React.FC = () => {
           style: 'destructive',
           onPress: () => {
             dispatch(logout());
-            navigation.replace('Auth');
+            navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
           },
         },
       ]

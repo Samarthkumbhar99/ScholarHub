@@ -1,10 +1,14 @@
 /**
  * Scholarship Discovery & Filter Domain Types
  */
+import {
+  Scholarship,
+  ScholarshipItem,
+  ScholarshipType,
+  ScholarshipStatus,
+} from '../../types/scholarship';
 
-export type ScholarshipType = 'all' | 'government' | 'private' | 'international';
-
-export type ScholarshipStatus = 'all' | 'open' | 'closing_soon';
+export type { Scholarship, ScholarshipItem, ScholarshipType, ScholarshipStatus };
 
 export type FundingFilterType = 'all' | 'fully_funded' | 'partially_funded';
 
@@ -20,37 +24,6 @@ export type FieldOfStudy =
 export type SortOption = 'best_match' | 'deadline_soon' | 'highest_award';
 
 /**
- * Complete Scholarship Item Model
- */
-export interface ScholarshipItem {
-  id: string;
-  title: string;
-  provider: string;
-  description: string;
-  awardAmount: string;
-  numericAmount: number;
-  deadline: string;
-  daysLeft: number;
-  type: 'government' | 'private' | 'international';
-  fundingType: 'fully_funded' | 'partially_funded';
-  fieldsOfStudy: string[];
-  eligibleCourses: string[];
-  eligibleCategories: string[];
-  minimumCGPA?: number;
-  maximumFamilyIncome?: number; // in INR
-  status: 'open' | 'closing_soon' | 'closed';
-  matchScore: number;
-  tags: string[];
-  officialWebsite?: string;
-  featured?: boolean;
-  benefits?: string[];
-  requiredDocuments?: string[];
-  selectionProcess?: string[];
-  eligibleStates?: string[];
-  eligibleCountries?: string[];
-}
-
-/**
  * Filter Criteria State
  */
 export interface ScholarshipFilterState {
@@ -63,3 +36,4 @@ export interface ScholarshipFilterState {
   maxFamilyIncome?: number; // in INR
   sortBy: SortOption;
 }
+

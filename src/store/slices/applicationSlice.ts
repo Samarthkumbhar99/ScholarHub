@@ -103,8 +103,11 @@ export const applicationSlice = createSlice({
       const existing = state.items.find((item) => item.scholarshipId === scholarshipId);
       if (!existing) {
         const todayStr = new Date().toISOString().split('T')[0];
+        const generatedId = scholarshipId.startsWith('sch_')
+          ? `app_${scholarshipId.slice(4)}`
+          : `app_${scholarshipId}`;
         const newApp: ApplicationItem = {
-          id: id || `app_${scholarshipId}`,
+          id: id || generatedId,
           scholarshipId,
           scholarshipTitle,
           provider,

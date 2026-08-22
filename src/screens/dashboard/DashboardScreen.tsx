@@ -2,8 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
+import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppSelector } from '../../hooks';
 import { ScreenContainer, Card } from '../../components/common';
 
@@ -15,7 +14,7 @@ import { StatsGrid } from './components/StatsGrid';
 import { ClosingSoonCard } from './components/ClosingSoonCard';
 import { QuickAccessSection } from './components/QuickAccessSection';
 
-type DashboardNavProp = BottomTabNavigationProp<StudentTabParamList, 'Dashboard'>;
+type DashboardNavProp = StudentTabScreenNavigationProp<'Dashboard'>;
 
 /**
  * DashboardScreen
@@ -51,12 +50,7 @@ export const DashboardScreen: React.FC = () => {
   const handleStatPress = (statKey: keyof DashboardStats) => {
     switch (statKey) {
       case 'saved': {
-        const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-        if (parentNav) {
-          parentNav.navigate('SavedScholarships');
-        } else {
-          (navigation as any).navigate('SavedScholarships');
-        }
+        navigation.navigate('SavedScholarships');
         break;
       }
       case 'eligible':
@@ -73,7 +67,9 @@ export const DashboardScreen: React.FC = () => {
   };
 
   const handleClosingSoonAction = () => {
-    navigation.navigate('Applications');
+    navigation.navigate('ScholarshipDetails', {
+      scholarshipId: MOCK_DASHBOARD_DATA.urgentDeadline.id,
+    });
   };
 
   const handleNavigateTab = (tab: keyof StudentTabParamList) => {
@@ -129,14 +125,7 @@ export const DashboardScreen: React.FC = () => {
             </View>
           </View>
           <TouchableOpacity
-            onPress={() => {
-              const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-              if (parentNav) {
-                parentNav.navigate('StudyAbroad');
-              } else {
-                (navigation as any).navigate('StudyAbroad');
-              }
-            }}
+            onPress={() => navigation.navigate('StudyAbroad')}
             className="py-1.5 px-3 rounded-xl bg-primary-600 active:bg-primary-700 items-center justify-center"
           >
             <Text className="text-xs font-bold text-white">Explore ➔</Text>

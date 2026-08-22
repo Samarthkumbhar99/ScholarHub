@@ -33,6 +33,8 @@ import {
 
 type StudyAbroadNavProp = NativeStackNavigationProp<RootStackParamList>;
 
+type StudyAbroadFilter = 'All' | 'LowTuition' | 'DE' | 'UK' | 'US' | 'CA' | 'AU' | 'SG';
+
 /**
  * StudyAbroadScreen
  * Primary international education discovery center for countries, universities, courses, and linked scholarships.
@@ -42,7 +44,7 @@ export const StudyAbroadScreen: React.FC = () => {
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'LowTuition' | 'DE' | 'UK' | 'US' | 'CA' | 'AU' | 'SG'>('All');
+  const [selectedFilter, setSelectedFilter] = useState<StudyAbroadFilter>('All');
   const [activeCourseModal, setActiveCourseModal] = useState<Course | null>(null);
 
   // Search results calculation
@@ -77,7 +79,7 @@ export const StudyAbroadScreen: React.FC = () => {
     setSelectedFilter('All');
   };
 
-  const filterTabs = [
+  const filterTabs: { key: StudyAbroadFilter; label: string }[] = [
     { key: 'All', label: 'All Destinations' },
     { key: 'LowTuition', label: 'Zero / Low Tuition 💰' },
     { key: 'DE', label: 'Germany 🇩🇪' },
@@ -136,7 +138,7 @@ export const StudyAbroadScreen: React.FC = () => {
                 return (
                   <TouchableOpacity
                     key={tab.key}
-                    onPress={() => setSelectedFilter(tab.key as any)}
+                    onPress={() => setSelectedFilter(tab.key)}
                     className={`py-1.5 px-3 rounded-full border ${
                       isSelected
                         ? 'bg-primary-600 border-primary-600 shadow-2xs'

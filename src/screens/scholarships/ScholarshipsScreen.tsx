@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
+import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   toggleSaveScholarship,
@@ -30,7 +29,7 @@ import { ActiveFilterChips } from './components/ActiveFilterChips';
 import { SortSelector } from './components/SortSelector';
 import { CompareSelectionBar } from './components/CompareSelectionBar';
 
-type ScholarshipsNavProp = BottomTabNavigationProp<StudentTabParamList, 'Scholarships'>;
+type ScholarshipsNavProp = StudentTabScreenNavigationProp<'Scholarships'>;
 
 /**
  * ScholarshipsScreen
@@ -42,6 +41,7 @@ export const ScholarshipsScreen: React.FC = () => {
   const { savedScholarshipIds, comparedScholarshipIds } = useAppSelector(
     (state) => state.scholarships
   );
+  const { items: applicationItems } = useAppSelector((state) => state.applications);
 
   // Filter & Search State
   const [filterState, setFilterState] = useState<ScholarshipFilterState>(initialFilterState);
@@ -100,8 +100,16 @@ export const ScholarshipsScreen: React.FC = () => {
   };
 
   const handleApply = (scholarship: ScholarshipItem) => {
+    const existingApp = applicationItems.find((app) => app.scholarshipId === scholarship.id);
+    const targetApplicationId = existingApp
+      ? existingApp.id
+      : scholarship.id.startsWith('sch_')
+      ? `app_${scholarship.id.slice(4)}`
+      : `app_${scholarship.id}`;
+
     dispatch(
       createOrGetApplication({
+        id: targetApplicationId,
         scholarshipId: scholarship.id,
         scholarshipTitle: scholarship.title,
         provider: scholarship.provider,
@@ -112,25 +120,13 @@ export const ScholarshipsScreen: React.FC = () => {
       })
     );
 
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('ApplicationDetails', {
-        applicationId: `app_${scholarship.id}`,
-      });
-    } else {
-      (navigation as any).navigate('ApplicationDetails', {
-        applicationId: `app_${scholarship.id}`,
-      });
-    }
+    navigation.navigate('ApplicationDetails', {
+      applicationId: targetApplicationId,
+    });
   };
 
   const handleDetails = (scholarship: ScholarshipItem) => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('ScholarshipDetails', { scholarshipId: scholarship.id });
-    } else {
-      (navigation as any).navigate('ScholarshipDetails', { scholarshipId: scholarship.id });
-    }
+    navigation.navigate('ScholarshipDetails', { scholarshipId: scholarship.id });
   };
 
   const handleSearchChange = (query: string) => {

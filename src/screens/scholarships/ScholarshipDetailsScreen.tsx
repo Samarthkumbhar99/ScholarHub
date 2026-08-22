@@ -49,6 +49,7 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   const { savedScholarshipIds, comparedScholarshipIds } = useAppSelector(
     (state) => state.scholarships
   );
+  const { items: applicationItems } = useAppSelector((state) => state.applications);
 
   const [compareFeedback, setCompareFeedback] = useState<string | null>(null);
 
@@ -108,8 +109,16 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   };
 
   const handleApplyNow = () => {
+    const existingApp = applicationItems.find((app) => app.scholarshipId === scholarship.id);
+    const targetApplicationId = existingApp
+      ? existingApp.id
+      : scholarship.id.startsWith('sch_')
+      ? `app_${scholarship.id.slice(4)}`
+      : `app_${scholarship.id}`;
+
     dispatch(
       createOrGetApplication({
+        id: targetApplicationId,
         scholarshipId: scholarship.id,
         scholarshipTitle: scholarship.title,
         provider: scholarship.provider,
@@ -121,7 +130,7 @@ export const ScholarshipDetailsScreen: React.FC = () => {
     );
 
     navigation.navigate('ApplicationDetails', {
-      applicationId: `app_${scholarship.id}`,
+      applicationId: targetApplicationId,
     });
   };
 

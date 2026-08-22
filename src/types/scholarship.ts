@@ -1,5 +1,6 @@
 /**
  * Scholarship Domain Types
+ * Canonical Model for ScholarHub Scholarships System
  */
 export type ScholarshipCategory =
   | 'merit'
@@ -11,28 +12,52 @@ export type ScholarshipCategory =
   | 'minority'
   | 'general';
 
-export type FundingType = 'full_ride' | 'partial' | 'tuition_only' | 'one_time_grant';
+export type FundingType =
+  | 'full_ride'
+  | 'partial'
+  | 'tuition_only'
+  | 'one_time_grant'
+  | 'fully_funded'
+  | 'partially_funded';
+
+export type ScholarshipType = 'all' | 'government' | 'private' | 'international';
+
+export type ScholarshipStatus = 'all' | 'open' | 'closing_soon' | 'closed';
 
 export interface Scholarship {
   id: string;
   title: string;
+  name?: string; // Canonical alias for title
   provider: string;
   description: string;
-  amount: number;
-  currency: string;
+  awardAmount: string;
+  numericAmount: number;
+  amount?: number; // Canonical alias for numericAmount
+  currency?: string;
   deadline: string;
-  category: ScholarshipCategory;
-  fundingType: FundingType;
-  eligibleCountries: string[];
-  minimumGpa?: number;
-  matchScore?: number;
+  daysLeft: number;
+  type: 'government' | 'private' | 'international';
+  category?: ScholarshipCategory;
+  fundingType: 'fully_funded' | 'partially_funded';
+  fieldsOfStudy: string[];
+  eligibleCourses?: string[];
+  eligibleCategories?: string[];
+  eligibleStates?: string[];
+  eligibleCountries?: string[];
+  minimumCGPA?: number;
+  minimumGpa?: number; // Canonical alias for minimumCGPA
+  maximumFamilyIncome?: number; // in INR
+  status: 'open' | 'closing_soon' | 'closed';
+  matchScore: number;
+  tags: string[];
   featured?: boolean;
   benefits?: string[];
   requiredDocuments?: string[];
   selectionProcess?: string[];
-  eligibleStates?: string[];
   officialWebsite?: string;
 }
+
+export type ScholarshipItem = Scholarship;
 
 export interface ScholarshipFilter {
   category?: ScholarshipCategory;
@@ -42,3 +67,4 @@ export interface ScholarshipFilter {
   country?: string;
   searchQuery?: string;
 }
+

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentTabParamList, RootStackParamList } from '../../types/navigation';
+import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   updatePersonalDetails,
@@ -34,7 +34,7 @@ import {
   SectionType,
 } from './components';
 
-type ProfileTabNavProp = BottomTabNavigationProp<StudentTabParamList, 'Profile'>;
+type ProfileTabNavProp = StudentTabScreenNavigationProp<'Profile'>;
 
 /**
  * ProfileScreen
@@ -60,43 +60,22 @@ export const ProfileScreen: React.FC = () => {
 
   // Navigation handlers
   const handleOpenSettings = () => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('Settings');
-    } else {
-      (navigation as any).navigate('Settings');
-    }
+    navigation.navigate('Settings');
   };
 
   const handleOpenEditProfile = (section?: SectionType) => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('EditProfile', { section });
-    } else {
-      (navigation as any).navigate('EditProfile', { section });
-    }
+    navigation.navigate('EditProfile', { section });
   };
 
   const handleOpenSavedScholarships = () => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('SavedScholarships');
-    } else {
-      (navigation as any).navigate('SavedScholarships');
-    }
+    navigation.navigate('SavedScholarships');
   };
 
   const handleOpenStudyAbroad = () => {
-    const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-    if (parentNav) {
-      parentNav.navigate('StudyAbroad');
-    } else {
-      (navigation as any).navigate('StudyAbroad');
-    }
+    navigation.navigate('StudyAbroad');
   };
 
   const handleLogout = () => {
-
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out of your ScholarHub account?',
@@ -108,11 +87,7 @@ export const ProfileScreen: React.FC = () => {
           onPress: () => {
             dispatch(logout());
             const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-            if (parentNav) {
-              parentNav.replace('Auth');
-            } else {
-              (navigation as any).replace('Auth');
-            }
+            parentNav?.reset({ index: 0, routes: [{ name: 'Auth' }] });
           },
         },
       ]
