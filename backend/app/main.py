@@ -1,8 +1,14 @@
+import logging
 from typing import Dict
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.database import get_db
+
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -35,11 +41,63 @@ def read_root() -> Dict[str, str]:
     }
 
 
-@app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
-def get_health() -> Dict[str, str]:
-    """Health check endpoint to verify backend operational readiness."""
+@app.get(
+    f"{settings.API_V1_STR}/health",
+    tags=["Health"],
+    responses={
+        200: {
+            "description": "Backend service and database are fully operational",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "healthy",
+                        "service": "ScholarHub API",
+                        "version": "1.0.0",
+                        "database": "connected",
+                    }
+                }
+            },
+        },
+        503: {
+            "description": "Backend service or database connection degraded",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "status": "unhealthy",
+                        "service": "ScholarHub API",
+                        "version": "1.0.0",
+                        "database": "disconnected",
+                    }
+                }
+            },
+        },
+    },
+)
+async def get_health(
+    response: Response, db: AsyncSession = Depends(get_db)
+) -> Dict[str, str]:
+    """Health check endpoint to verify backend operational readiness and PostgreSQL connectivity."""
+    db_status = "disconnected"
+    try:
+        result = await db.execute(text("SELECT 1"))
+        if result.scalar() == 1:
+            db_status = "connected"
+    except Exception as exc:
+        logger.error(f"Database health check failed: {exc}")
+        db_status = "disconnected"
+
+    if db_status == "connected":
+        return {
+            "status": "healthy",
+            "service": settings.APP_NAME,
+            "version": settings.VERSION,
+            "database": "connected",
+        }
+
+    response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return {
-        "status": "healthy",
+        "status": "unhealthy",
         "service": settings.APP_NAME,
         "version": settings.VERSION,
+        "database": "disconnected",
     }

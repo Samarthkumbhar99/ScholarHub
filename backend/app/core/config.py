@@ -24,6 +24,28 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
+    # Database Configuration (PostgreSQL with SQLAlchemy 2.x & asyncpg)
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://scholarhub_user:scholarhub_password@localhost:5432/scholarhub_db"
+    )
+    DB_ECHO: bool = False
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_PRE_PING: bool = True
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, value: str) -> str:
+        """Ensure database URL utilizes the asyncpg driver for async SQLAlchemy."""
+        if not value:
+            return value
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql+asyncpg://", 1)
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return value
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, value: Union[str, List[str]]) -> List[str]:
