@@ -1,5 +1,5 @@
 import json
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "scholarhub_dev_secret_key_32bytes_min_length_placeholder_value"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days default expiration
+
+    # Gemini AI Configuration
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_REQUEST_TIMEOUT_SECONDS: int = 15
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

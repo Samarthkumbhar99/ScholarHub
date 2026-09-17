@@ -13,6 +13,12 @@ from app.schemas.profile import (
     StudentProfileResponse,
     StudentProfileUpdate,
 )
+from app.schemas.matching import (
+    MatchLevel,
+    ScholarshipMatchResponse,
+    ScholarshipRecommendationItem,
+    ScholarshipRecommendationResponse,
+)
 from app.schemas.scholarship import (
     SavedStatusResponse,
     ScholarshipCompareResponse,
@@ -45,4 +51,9 @@ __all__ = [
     "ScholarshipListResponse",
     "SavedStatusResponse",
     "ScholarshipCompareResponse",
+    # Matching / AI
+    "MatchLevel",
+    "ScholarshipMatchResponse",
+    "ScholarshipRecommendationItem",
+    "ScholarshipRecommendationResponse",
 ]

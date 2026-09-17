@@ -11,8 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user
 from app.core.database import get_db
+from app.models.profile import AcademicProfile, FinancialPreference, StudentProfile
 from app.models.scholarship import SavedScholarship, Scholarship, ScholarshipRequirement
 from app.models.user import User
+from app.schemas.matching import (
+    ScholarshipMatchResponse,
+    ScholarshipRecommendationResponse,
+)
 from app.schemas.scholarship import (
     SavedStatusResponse,
     ScholarshipCompareResponse,
@@ -22,6 +27,7 @@ from app.schemas.scholarship import (
     ScholarshipResponse,
     ScholarshipSortOption,
 )
+from app.services.ai.matching_service import ScholarshipMatchingService
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +277,86 @@ async def compare_scholarships(
 
 
 # ==============================================================================
-# 4. SCHOLARSHIP DETAILS (PARAMETERIZED ROUTE)
+# 4. SCHOLARSHIP RECOMMENDATIONS (STATIC ROUTES)
+# ==============================================================================
+@router.get(
+    "/recommendations",
+    response_model=ScholarshipRecommendationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get personalized scholarship recommendations for authenticated student",
+    responses={
+        200: {"description": "Ranked scholarship recommendations retrieved successfully"},
+        401: {"description": "Authentication required"},
+        422: {"description": "Validation error in pagination or query parameters"},
+    },
+)
+@router.get(
+    "/recommended",
+    response_model=ScholarshipRecommendationResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def get_scholarship_recommendations(
+    page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(default=10, ge=1, le=50, description="Items per page (max 50)"),
+    min_score: Optional[int] = Query(default=None, ge=0, le=100, description="Minimum match score threshold (0-100)"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ScholarshipRecommendationResponse:
+    """Compute and return personalized scholarship recommendations ranked by match score."""
+    # 1. Load authenticated student's profile sections
+    prof_stmt = select(StudentProfile).where(StudentProfile.user_id == current_user.id)
+    acad_stmt = select(AcademicProfile).where(AcademicProfile.user_id == current_user.id)
+    fin_stmt = select(FinancialPreference).where(FinancialPreference.user_id == current_user.id)
+
+    prof_res = await db.execute(prof_stmt)
+    acad_res = await db.execute(acad_stmt)
+    fin_res = await db.execute(fin_stmt)
+
+    personal = prof_res.scalar_one_or_none()
+    academic = acad_res.scalar_one_or_none()
+    preferences = fin_res.scalar_one_or_none()
+
+    # 2. Query available scholarships (bounded limit for efficient evaluation)
+    sch_stmt = select(Scholarship).order_by(Scholarship.deadline.asc()).limit(100)
+    sch_res = await db.execute(sch_stmt)
+    scholarships = list(sch_res.scalars().all())
+
+    if not scholarships:
+        return ScholarshipRecommendationResponse.create(
+            items=[],
+            total=0,
+            page=page,
+            page_size=page_size,
+        )
+
+    # 3. Evaluate matching service
+    matching_service = ScholarshipMatchingService()
+    recommendations = await matching_service.recommend_scholarships(
+        scholarships=scholarships,
+        personal_profile=personal,
+        academic_profile=academic,
+        financial_preference=preferences,
+    )
+
+    # 4. Optional minimum score filter
+    if min_score is not None:
+        recommendations = [r for r in recommendations if r.match.match_score >= min_score]
+
+    total = len(recommendations)
+    offset = (page - 1) * page_size
+    paged_items = recommendations[offset : offset + page_size]
+
+    return ScholarshipRecommendationResponse.create(
+        items=paged_items,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+# ==============================================================================
+# 5. SCHOLARSHIP DETAILS (PARAMETERIZED ROUTE)
 # ==============================================================================
 @router.get(
     "/{scholarship_id}",
@@ -345,7 +430,70 @@ async def get_scholarship_requirements(
 
 
 # ==============================================================================
-# 6. SAVE / BOOKMARK SCHOLARSHIP
+# 6. SCHOLARSHIP AI MATCHING
+# ==============================================================================
+@router.get(
+    "/{scholarship_id}/match",
+    response_model=ScholarshipMatchResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get AI-powered match score and explanation for a specific scholarship",
+    responses={
+        200: {"description": "Match score and detailed criteria assessment generated successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Scholarship not found"},
+        422: {"description": "Invalid UUID format"},
+    },
+)
+async def match_scholarship(
+    scholarship_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ScholarshipMatchResponse:
+    """Evaluate compatibility between the authenticated student's profile and a specific scholarship."""
+    # 1. Fetch scholarship
+    sch_stmt = select(Scholarship).where(Scholarship.id == scholarship_id)
+    sch_res = await db.execute(sch_stmt)
+    scholarship = sch_res.scalar_one_or_none()
+
+    if scholarship is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scholarship not found",
+        )
+
+    # 2. Fetch scholarship requirements
+    req_stmt = select(ScholarshipRequirement).where(ScholarshipRequirement.scholarship_id == scholarship_id)
+    req_res = await db.execute(req_stmt)
+    requirements = list(req_res.scalars().all())
+
+    # 3. Fetch authenticated student's profile sections
+    prof_stmt = select(StudentProfile).where(StudentProfile.user_id == current_user.id)
+    acad_stmt = select(AcademicProfile).where(AcademicProfile.user_id == current_user.id)
+    fin_stmt = select(FinancialPreference).where(FinancialPreference.user_id == current_user.id)
+
+    prof_res = await db.execute(prof_stmt)
+    acad_res = await db.execute(acad_stmt)
+    fin_res = await db.execute(fin_stmt)
+
+    personal = prof_res.scalar_one_or_none()
+    academic = acad_res.scalar_one_or_none()
+    preferences = fin_res.scalar_one_or_none()
+
+    # 4. Invoke AI matching service
+    matching_service = ScholarshipMatchingService()
+    match_result = await matching_service.evaluate_single_match(
+        scholarship=scholarship,
+        requirements=requirements,
+        personal_profile=personal,
+        academic_profile=academic,
+        financial_preference=preferences,
+    )
+
+    return match_result
+
+
+# ==============================================================================
+# 7. SAVE / BOOKMARK SCHOLARSHIP
 # ==============================================================================
 @router.post(
     "/{scholarship_id}/save",
