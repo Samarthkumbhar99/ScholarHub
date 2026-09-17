@@ -44,6 +44,27 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.5-flash"
     GEMINI_REQUEST_TIMEOUT_SECONDS: int = 15
 
+    # Cloudinary File Storage Configuration
+    CLOUDINARY_CLOUD_NAME: Optional[str] = None
+    CLOUDINARY_API_KEY: Optional[str] = None
+    CLOUDINARY_API_SECRET: Optional[str] = None
+    CLOUDINARY_FOLDER: str = "scholarhub/student_documents"
+
+    # Document Upload Constraints (10 MB max matching frontend specifications)
+    MAX_DOCUMENT_SIZE_BYTES: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_DOCUMENT_MIME_TYPES: List[str] = [
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+    ]
+    ALLOWED_DOCUMENT_EXTENSIONS: List[str] = [
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+    ]
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def assemble_database_url(cls, value: str) -> str:

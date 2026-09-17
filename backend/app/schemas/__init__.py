@@ -13,6 +13,15 @@ from app.schemas.profile import (
     StudentProfileResponse,
     StudentProfileUpdate,
 )
+from app.schemas.application import (
+    ApplicationCreateRequest,
+    ApplicationDeleteResponse,
+    ApplicationListItem,
+    ApplicationListResponse,
+    ApplicationResponse,
+    ApplicationScholarshipInfo,
+    ApplicationStatusUpdateRequest,
+)
 from app.schemas.matching import (
     MatchLevel,
     ScholarshipMatchResponse,
@@ -27,6 +36,14 @@ from app.schemas.scholarship import (
     ScholarshipRequirementResponse,
     ScholarshipResponse,
     ScholarshipSortOption,
+)
+
+from app.schemas.document import (
+    DocumentCategoryEnum,
+    DocumentDeleteResponse,
+    DocumentListResponse,
+    DocumentResponse,
+    DocumentTypeEnum,
 )
 
 __all__ = [
@@ -56,4 +73,18 @@ __all__ = [
     "ScholarshipMatchResponse",
     "ScholarshipRecommendationItem",
     "ScholarshipRecommendationResponse",
+    # Application
+    "ApplicationScholarshipInfo",
+    "ApplicationCreateRequest",
+    "ApplicationStatusUpdateRequest",
+    "ApplicationResponse",
+    "ApplicationListItem",
+    "ApplicationListResponse",
+    "ApplicationDeleteResponse",
+    # Document
+    "DocumentTypeEnum",
+    "DocumentCategoryEnum",
+    "DocumentResponse",
+    "DocumentListResponse",
+    "DocumentDeleteResponse",
 ]
