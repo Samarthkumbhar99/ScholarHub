@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_PRE_PING: bool = True
 
+    # JWT & Authentication Configuration
+    JWT_SECRET_KEY: str = "scholarhub_dev_secret_key_32bytes_min_length_placeholder_value"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days default expiration
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def assemble_database_url(cls, value: str) -> str:
