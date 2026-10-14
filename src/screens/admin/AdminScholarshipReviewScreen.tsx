@@ -26,6 +26,7 @@ import {
   Divider,
 } from '../../components/common';
 import { PrimaryButton, SecondaryButton, OutlineButton } from '../../components/buttons';
+import { showConfirmDialog, showMessageDialog } from '../../utils';
 
 type ReviewRouteProp = RouteProp<RootStackParamList, 'AdminScholarshipReview'>;
 type ReviewNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -99,31 +100,26 @@ export const AdminScholarshipReviewScreen: React.FC = () => {
 
   // Approve action
   const handleApprove = async () => {
-    Alert.alert(
-      'Approve Scholarship',
-      'Are you sure you want to approve this scholarship? It will become VERIFIED and visible to all students.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve & Publish',
-          style: 'default',
-          onPress: async () => {
-            try {
-              setActionLoading(true);
-              const res = await adminService.approveScholarship(scholarshipId);
-              if (res.data) {
-                setScholarship(res.data);
-                setFeedbackMessage('Scholarship successfully approved and published! ✅');
-              }
-            } catch (err: any) {
-              Alert.alert('Approval Error', err?.message || 'Failed to approve scholarship.');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    showConfirmDialog({
+      title: 'Approve Scholarship',
+      message: 'Are you sure you want to approve this scholarship? It will become VERIFIED and visible to all students.',
+      confirmText: 'Approve & Publish',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          setActionLoading(true);
+          const res = await adminService.approveScholarship(scholarshipId);
+          if (res.data) {
+            setScholarship(res.data);
+            setFeedbackMessage('Scholarship successfully approved and published! ✅');
+          }
+        } catch (err: any) {
+          showMessageDialog('Approval Error', err?.message || 'Failed to approve scholarship.');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   // Reject action

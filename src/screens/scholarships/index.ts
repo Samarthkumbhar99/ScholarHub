@@ -9,7 +9,6 @@ export * from './components/ActiveFilterChips';
 export * from './components/SortSelector';
 export * from './components/CompareSelectionBar';
 export * from './types';
-export * from './data/mockScholarships';
 export * from './utils/filterScholarships';
 export { default } from './ScholarshipsScreen';
 

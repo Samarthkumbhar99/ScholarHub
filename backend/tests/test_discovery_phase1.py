@@ -174,11 +174,12 @@ async def test_legacy_scholarships_remain_visible(async_client: AsyncClient):
     """Verify legacy scholarships (review_status='LEGACY', is_verified=False) remain visible to students."""
     _, auth_headers = await create_student_user(async_client)
     sch_id = uuid.uuid4()
+    grant_name = f"Legacy SeedTest Grant {uuid.uuid4().hex[:6]}"
 
     async with TestAsyncSessionLocal() as session:
         sch = Scholarship(
             id=sch_id,
-            name="Legacy SeedTest Grant",
+            name=grant_name,
             provider="Legacy Corp",
             description="Existing pre-migration scholarship.",
             amount=Decimal("40000.00"),
@@ -192,7 +193,7 @@ async def test_legacy_scholarships_remain_visible(async_client: AsyncClient):
     # 1. Must be listed in public search/list
     res_list = await async_client.get(
         "/api/v1/scholarships",
-        params={"q": "Legacy SeedTest Grant"},
+        params={"q": grant_name},
         headers=auth_headers,
     )
     assert res_list.status_code == 200
@@ -205,7 +206,7 @@ async def test_legacy_scholarships_remain_visible(async_client: AsyncClient):
         headers=auth_headers,
     )
     assert res_detail.status_code == 200
-    assert res_detail.json()["name"] == "Legacy SeedTest Grant"
+    assert res_detail.json()["name"] == grant_name
     assert res_detail.json()["review_status"] == "LEGACY"
     assert res_detail.json()["is_verified"] is False
 

@@ -12,13 +12,38 @@ export const initialFilterState: ScholarshipFilterState = {
 };
 
 /**
+ * Deduplicates scholarship records by unique ID and normalized (title + provider) signature.
+ * Guarantees that any given scholarship is presented exactly once to the user.
+ */
+export const deduplicateScholarships = (items: ScholarshipItem[]): ScholarshipItem[] => {
+  const seenIds = new Set<string>();
+  const seenSignatures = new Set<string>();
+  const uniqueItems: ScholarshipItem[] = [];
+
+  for (const item of items) {
+    if (!item || !item.id) continue;
+    const signature = `${(item.title || '').trim().toLowerCase()}::${(item.provider || '').trim().toLowerCase()}`;
+
+    if (!seenIds.has(item.id) && !seenSignatures.has(signature)) {
+      seenIds.add(item.id);
+      seenSignatures.add(signature);
+      uniqueItems.push(item);
+    }
+  }
+
+  return uniqueItems;
+};
+
+/**
  * Filter and sort scholarship items based on user criteria
  */
 export const filterScholarships = (
   items: ScholarshipItem[],
   filter: ScholarshipFilterState
 ): ScholarshipItem[] => {
-  return items
+  const dedupedItems = deduplicateScholarships(items);
+
+  return dedupedItems
     .filter((item) => {
       // 1. Search Query Filter (Matches title, provider, field of study, or tags)
       if (filter.searchQuery.trim()) {

@@ -533,7 +533,7 @@ async def test_notification_creation_service_with_relations(async_client: AsyncC
 
         sch = Scholarship(
             id=sch_id,
-            name="STEM Innovation Fellowship",
+            name=f"Test Notification Scholarship {sch_id.hex[:6]}",
             provider="Tech Foundation",
             description="Fellowship grant",
             amount=Decimal("50000.00"),
@@ -565,6 +565,16 @@ async def test_notification_creation_service_with_relations(async_client: AsyncC
         assert notif.scholarship_id == sch_id
         assert notif.application_id == app_id
         assert notif.is_read is False
+
+        # Cleanup test records
+        await session.delete(notif)
+        del_app = await session.get(Application, app_id)
+        if del_app:
+            await session.delete(del_app)
+        del_sch = await session.get(Scholarship, sch_id)
+        if del_sch:
+            await session.delete(del_sch)
+        await session.commit()
 
 
 @pytest.mark.anyio

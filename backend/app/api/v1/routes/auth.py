@@ -152,7 +152,7 @@ async def register_provider(
         website=payload.website,
         phone=payload.phone,
         description=payload.description,
-        is_approved=True,
+        is_approved=not payload.pending_approval if payload.pending_approval is not None else True,
     )
 
     db.add(new_user)

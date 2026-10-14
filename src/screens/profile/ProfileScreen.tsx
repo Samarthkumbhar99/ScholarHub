@@ -20,6 +20,7 @@ import {
   calculateProfileCompletion,
   formatIncomeAmount,
 } from '../../utils/profileUtils';
+import { showConfirmDialog } from '../../utils';
 import {
   ScreenContainer,
   Header,
@@ -76,22 +77,22 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of your ScholarHub account?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(logout());
-            const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
-            parentNav?.reset({ index: 0, routes: [{ name: 'Auth' }] });
-          },
-        },
-      ]
-    );
+    showConfirmDialog({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out of your ScholarHub account?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () => {
+        dispatch(logout());
+        const parentNav = navigation.getParent<NativeStackNavigationProp<RootStackParamList>>();
+        if (parentNav) {
+          parentNav.reset({ index: 0, routes: [{ name: 'Auth' }] });
+        } else {
+          navigation.navigate('Auth' as any);
+        }
+      },
+    });
   };
 
   return (

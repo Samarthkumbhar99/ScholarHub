@@ -7,64 +7,10 @@ import {
   AcademicDetails,
   PreferencesDetails,
 } from '../../types';
-import { authService, LoginCredentials } from '../../services/authService';
+import { authService, LoginCredentials, ProviderRegisterPayload } from '../../services/authService';
 import { profileService } from '../../services/profileService';
 import { apiClient } from '../../services/api';
 import { mapBackendProfileToFrontend } from '../../utils/adapters';
-
-export const initialDefaultProfile: UserProfile = {
-  id: 'usr_student_01',
-  email: 'rahul.sharma@university.edu',
-  firstName: 'Rahul',
-  lastName: 'Sharma',
-  name: 'Rahul Sharma',
-  role: 'student',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  educationLevel: 'undergraduate',
-  major: 'Computer Science',
-  gpa: 8.7,
-  country: 'India',
-  isProfileComplete: true,
-  isVerified: true,
-  personal: {
-    firstName: 'Rahul',
-    lastName: 'Sharma',
-    dateOfBirth: '2004-05-14',
-    gender: 'Male',
-    email: 'rahul.sharma@university.edu',
-    mobile: '9876543210',
-  },
-  academic: {
-    country: 'India',
-    state: 'Maharashtra',
-    district: 'Pune',
-    city: 'Pune',
-    course: 'B.Tech',
-    branch: 'Computer Science',
-    currentYear: '3rd Year',
-    university: 'Savitribai Phule Pune University',
-    college: 'College of Engineering Pune (COEP)',
-    cgpa: '8.70',
-    previousPercentage: '88.5',
-  },
-  preferences: {
-    reservationCategory: 'OBC',
-    specialCategories: ['None'],
-    familyIncome: '450000',
-    studyPreference: 'Both',
-  },
-  settings: {
-    notificationsEnabled: true,
-    deadlineRemindersEnabled: true,
-    emailAlertsEnabled: true,
-    language: 'English (US)',
-  },
-  createdAt: '2026-07-01T10:00:00.000Z',
-  updatedAt: '2026-08-20T12:00:00.000Z',
-};
-
-// Aliased export for backwards-compatibility
-export const initialMockProfile = initialDefaultProfile;
 
 const initialState: AuthState = {
   user: null,
@@ -79,7 +25,7 @@ const initialState: AuthState = {
 // ==============================================================================
 
 /**
- * Log in student with email/password against FastAPI backend
+ * Log in user (Student, Provider, or Admin) with email/password against FastAPI backend
  */
 export const loginUserThunk = createAsyncThunk(
   'auth/loginUser',
@@ -90,12 +36,18 @@ export const loginUserThunk = createAsyncThunk(
 
       // Fetch user profile and me data
       const meRes = await authService.getMe();
-      const profileRes = await profileService.getCombinedProfile();
+      let profileData = {};
+      try {
+        const profileRes = await profileService.getCombinedProfile();
+        profileData = profileRes.data || {};
+      } catch {
+        // Non-student accounts (Provider, Admin) do not require Student combined profile
+      }
 
       const user = mapBackendProfileToFrontend(
         meRes.data.email,
         meRes.data.id,
-        profileRes.data || {},
+        profileData,
         meRes.data.role,
         meRes.data.provider_profile
       );
@@ -185,11 +137,18 @@ export const registerUserThunk = createAsyncThunk(
       }
 
       // Fetch combined profile
-      const profileRes = await profileService.getCombinedProfile();
+      let profileData = {};
+      try {
+        const profileRes = await profileService.getCombinedProfile();
+        profileData = profileRes.data || {};
+      } catch {
+        // Fallback for empty profile
+      }
+
       const user = mapBackendProfileToFrontend(
         meRes.data.email,
         meRes.data.id,
-        profileRes.data || {},
+        profileData,
         meRes.data.role,
         meRes.data.provider_profile
       );
@@ -197,6 +156,47 @@ export const registerUserThunk = createAsyncThunk(
       return { token, user };
     } catch (err: any) {
       return rejectWithValue(err.message || 'Registration failed.');
+    }
+  }
+);
+
+/**
+ * Register provider account and initialize provider profile
+ */
+export const registerProviderThunk = createAsyncThunk(
+  'auth/registerProvider',
+  async (payload: ProviderRegisterPayload, { rejectWithValue }) => {
+    try {
+      // 1. Register provider account
+      await authService.registerProvider(payload);
+
+      // 2. Login to get token
+      const loginRes = await authService.login({
+        email: payload.email,
+        password: payload.password,
+      });
+      const token = loginRes.data.access_token;
+      const meRes = await authService.getMe();
+
+      let profileData = {};
+      try {
+        const profileRes = await profileService.getCombinedProfile();
+        profileData = profileRes.data || {};
+      } catch {
+        // Provider profiles do not have student combined profile data
+      }
+
+      const user = mapBackendProfileToFrontend(
+        meRes.data.email,
+        meRes.data.id,
+        profileData,
+        meRes.data.role,
+        meRes.data.provider_profile
+      );
+
+      return { token, user };
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Provider registration failed.');
     }
   }
 );
@@ -214,12 +214,18 @@ export const restoreSessionThunk = createAsyncThunk(
       }
 
       const meRes = await authService.getMe();
-      const profileRes = await profileService.getCombinedProfile();
+      let profileData = {};
+      try {
+        const profileRes = await profileService.getCombinedProfile();
+        profileData = profileRes.data || {};
+      } catch {
+        // Non-student accounts (Provider, Admin) do not require Student combined profile
+      }
 
       const user = mapBackendProfileToFrontend(
         meRes.data.email,
         meRes.data.id,
-        profileRes.data || {},
+        profileData,
         meRes.data.role,
         meRes.data.provider_profile
       );
@@ -376,11 +382,6 @@ export const authSlice = createSlice({
         };
       }
     },
-    resetProfile: (state) => {
-      state.user = initialDefaultProfile;
-      state.isAuthenticated = true;
-      state.token = 'mock-jwt-authenticated-token';
-    },
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -425,7 +426,20 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.error = null;
       })
-      .addCase(registerUserThunk.rejected, (state, action) => {
+    // Register Provider
+    builder
+      .addCase(registerProviderThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerProviderThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.token = action.payload.token;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(registerProviderThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });
@@ -482,7 +496,6 @@ export const {
   updatePreferencesDetails,
   updateSettings,
   updateFullProfile,
-  resetProfile,
   logout,
 } = authSlice.actions;
 

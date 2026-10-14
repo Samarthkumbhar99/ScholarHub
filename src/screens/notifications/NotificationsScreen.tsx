@@ -7,7 +7,6 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   setNotificationFilterTab,
-  resetNotifications,
   fetchNotificationsThunk,
   fetchUnreadCountThunk,
   markNotificationReadThunk,
@@ -220,13 +219,13 @@ export const NotificationsScreen: React.FC = () => {
             actionTitle={
               filterTab === 'unread'
                 ? 'View All Notifications ➔'
-                : 'Reset Demo Alerts ↺'
+                : 'Refresh ↺'
             }
             onActionPress={() => {
               if (filterTab === 'unread') {
                 dispatch(setNotificationFilterTab('all'));
               } else {
-                dispatch(resetNotifications());
+                dispatch(fetchNotificationsThunk());
               }
             }}
           />
@@ -258,25 +257,6 @@ export const NotificationsScreen: React.FC = () => {
             ))}
           </View>
         )}
-
-        {/* Demo / Reset Tool */}
-        <Card variant="outlined" className="p-4 items-center bg-slate-100/70 border-slate-200">
-          <Text className="text-xs font-bold text-slate-700 text-center mb-1">
-            Need to Test Notification Events?
-          </Text>
-          <Text className="text-[11px] text-slate-500 text-center mb-3">
-            Reset notification center to initial mock alerts and unread counts.
-          </Text>
-          <OutlineButton
-            title="Reset Notification Alerts ↺"
-            size="sm"
-            className="border-slate-300 bg-white"
-            textClassName="text-slate-700 font-bold"
-            onPress={() => {
-              dispatch(resetNotifications());
-            }}
-          />
-        </Card>
       </ScreenContainer>
     </View>
   );

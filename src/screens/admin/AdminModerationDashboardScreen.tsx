@@ -28,12 +28,37 @@ import {
   Divider,
 } from '../../components/common';
 import { OutlineButton } from '../../components/buttons';
+import { useAppDispatch } from '../../hooks';
+import { logout } from '../../store/slices/authSlice';
+import { showConfirmDialog } from '../../utils';
 
 type AdminNavProp = NativeStackNavigationProp<RootStackParamList>;
 type DashboardTab = 'pending' | 'all' | 'jobs';
 
 export const AdminModerationDashboardScreen: React.FC = () => {
   const navigation = useNavigation<AdminNavProp>();
+  const dispatch = useAppDispatch();
+
+  const handleAdminLogout = () => {
+    showConfirmDialog({
+      title: 'Sign Out',
+      message: 'Are you sure you want to log out of the administrator portal?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () => {
+        dispatch(logout());
+        try {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
+        } catch {
+          navigation.navigate('Auth' as any);
+        }
+      },
+    });
+  };
 
   // State
   const [activeTab, setActiveTab] = useState<DashboardTab>('pending');
@@ -176,7 +201,21 @@ export const AdminModerationDashboardScreen: React.FC = () => {
           title="Moderation Portal"
           subtitle="Review discovered scholarships, verify records & inspect collection history"
           showBack
-          onBackPress={() => navigation.goBack()}
+          onBackPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              handleAdminLogout();
+            }
+          }}
+          rightAction={
+            <TouchableOpacity
+              onPress={handleAdminLogout}
+              className="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700"
+            >
+              <Text className="text-xs font-semibold text-slate-200">Sign Out</Text>
+            </TouchableOpacity>
+          }
         />
 
         {/* 1. Dashboard Metrics Overview */}

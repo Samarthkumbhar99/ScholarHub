@@ -86,8 +86,10 @@ async def test_admin_calling_admin_endpoint_succeeds(async_client: AsyncClient):
 async def test_admin_create_scholarship(async_client: AsyncClient):
     """4. Verify Admin can create a new scholarship with all fields."""
     admin = await create_and_login_user(async_client, prefix="adm_csch", role=UserRole.ADMIN)
+    import uuid
+    sch_name = f"Tata Innovation Fellowship {uuid.uuid4().hex[:6]}"
     payload = {
-        "name": "Tata Innovation Fellowship",
+        "name": sch_name,
         "provider": "Tata Trusts",
         "description": "Fellowship supporting innovative STEM initiatives.",
         "amount": "120000.00",
@@ -100,9 +102,13 @@ async def test_admin_create_scholarship(async_client: AsyncClient):
     res = await async_client.post("/api/v1/admin/scholarships", json=payload, headers=admin["headers"])
     assert res.status_code == 201
     data = res.json()
-    assert data["name"] == payload["name"]
+    assert data["name"] == sch_name
     assert float(data["amount"]) == 120000.00
     assert data["benefits"] == payload["benefits"]
+
+    # Clean up test scholarship
+    if "id" in data:
+        await async_client.delete(f"/api/v1/admin/scholarships/{data['id']}", headers=admin["headers"])
 
 
 @pytest.mark.anyio

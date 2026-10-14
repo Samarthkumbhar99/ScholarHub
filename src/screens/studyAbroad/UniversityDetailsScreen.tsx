@@ -15,7 +15,7 @@ import {
   getCoursesByUniversity,
   getScholarshipsForUniversity,
 } from '../../utils/studyAbroadUtils';
-import { MOCK_SCHOLARSHIPS } from '../scholarships/data/mockScholarships';
+import { useAppSelector } from '../../hooks';
 import {
   ScreenContainer,
   Header,
@@ -37,6 +37,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export const UniversityDetailsScreen: React.FC = () => {
   const route = useRoute<UniversityDetailsRouteProp>();
   const navigation = useNavigation<NavProp>();
+  const { items: reduxScholarships } = useAppSelector((state) => state.scholarships);
 
   const [activeCourseModal, setActiveCourseModal] = useState<Course | null>(null);
 
@@ -50,8 +51,8 @@ export const UniversityDetailsScreen: React.FC = () => {
 
   const linkedScholarships = useMemo(() => {
     if (!university) return [];
-    return getScholarshipsForUniversity(university, MOCK_SCHOLARSHIPS);
-  }, [university]);
+    return getScholarshipsForUniversity(university, reduxScholarships);
+  }, [university, reduxScholarships]);
 
   if (!university) {
     return (

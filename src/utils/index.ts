@@ -4,7 +4,4 @@ export * from './documentUtils';
 export * from './notificationUtils';
 export * from './profileUtils';
 export * from './studyAbroadUtils';
-
-
-
-
+export * from './alertUtils';

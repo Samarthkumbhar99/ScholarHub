@@ -17,7 +17,6 @@ import {
   EmptyState,
 } from '../../components/common';
 import { PrimaryButton, OutlineButton } from '../../components/buttons';
-import { MOCK_SCHOLARSHIPS } from './data/mockScholarships';
 import { MatchScoreBadge } from './components/MatchScoreBadge';
 import { CompareSelectionBar } from './components/CompareSelectionBar';
 import { ScholarshipItem } from './types';
@@ -40,9 +39,9 @@ export const SavedScholarshipsScreen: React.FC = () => {
     dispatch(fetchSavedScholarshipsThunk());
   }, [dispatch]);
 
-  // Combine backend list or match with existing scholarships
+  // Use genuine backend scholarships matching saved IDs
   const savedScholarships: ScholarshipItem[] = useMemo(() => {
-    const source = reduxScholarships && reduxScholarships.length > 0 ? reduxScholarships : MOCK_SCHOLARSHIPS;
+    const source = reduxScholarships || [];
     return source.filter((item) => savedScholarshipIds.includes(item.id));
   }, [reduxScholarships, savedScholarshipIds]);
 

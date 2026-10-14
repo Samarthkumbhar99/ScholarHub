@@ -53,6 +53,7 @@ class ProviderRegisterRequest(BaseModel):
     website: Optional[str] = Field(None, max_length=500, description="Organization website URL")
     phone: Optional[str] = Field(None, max_length=50, description="Official phone number")
     description: Optional[str] = Field(None, description="Brief organization background or mission statement")
+    pending_approval: Optional[bool] = Field(default=False, description="Whether to mark provider as pending admin verification")
 
     @field_validator("email", mode="before")
     @classmethod

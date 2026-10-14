@@ -406,10 +406,11 @@ async def test_admin_moderation_approves_and_rejects_provider_submission(async_c
     student = await register_and_login(async_client, email_prefix="stud_view", role="STUDENT")
 
     # 1. Provider submits scholarship
+    sch_name = f"Infosys STEM Excellence Award {uuid.uuid4().hex[:6]}"
     sub_res = await async_client.post(
         "/api/v1/provider/scholarships",
         json={
-            "name": "Infosys STEM Excellence Award",
+            "name": sch_name,
             "description": "STEM scholarship for top performers.",
             "amount": 150000,
             "deadline": str(date.today() + timedelta(days=90)),
@@ -431,7 +432,7 @@ async def test_admin_moderation_approves_and_rejects_provider_submission(async_c
     detail_res = await async_client.get(f"/api/v1/scholarships/{sch_id}", headers=student["headers"])
     assert detail_res.status_code == 200, "Verified scholarship must be accessible to students"
 
-    pub_res = await async_client.get("/api/v1/scholarships?q=Infosys%20STEM", headers=student["headers"])
+    pub_res = await async_client.get(f"/api/v1/scholarships?q={sch_name}", headers=student["headers"])
     ids = [s["id"] for s in pub_res.json()["items"]]
     assert sch_id in ids, "Verified scholarship must be visible to students in search results"
 
@@ -449,7 +450,7 @@ async def test_admin_moderation_approves_and_rejects_provider_submission(async_c
     detail_res_2 = await async_client.get(f"/api/v1/scholarships/{sch_id}", headers=student["headers"])
     assert detail_res_2.status_code == 404, "Rejected scholarship must return 404 to students"
 
-    pub_res_2 = await async_client.get("/api/v1/scholarships?q=Infosys%20STEM", headers=student["headers"])
+    pub_res_2 = await async_client.get(f"/api/v1/scholarships?q={sch_name}", headers=student["headers"])
     ids_2 = [s["id"] for s in pub_res_2.json()["items"]]
     assert sch_id not in ids_2, "Rejected scholarship must be hidden from students"
 
@@ -498,3 +499,245 @@ async def test_legacy_scholarships_and_users_remain_intact(async_client: AsyncCl
     # Public catalog endpoint returns 200 OK and responds with listings
     assert "items" in res.json()
     assert "total" in res.json()
+
+
+# ==============================================================================
+# SCENARIO 2B: DUPLICATE PROVIDER REGISTRATION PREVENTION
+# ==============================================================================
+@pytest.mark.anyio
+async def test_duplicate_provider_registration_conflict(async_client: AsyncClient):
+    """Verify duplicate provider registration returns 409 Conflict."""
+    email = f"dup_prov_{uuid.uuid4().hex[:8]}@foundation.org"
+    password = "SecurePassword123!"
+
+    # First registration
+    res1 = await async_client.post(
+        "/api/v1/auth/register-provider",
+        json={
+            "email": email,
+            "password": password,
+            "organization_name": "Original Foundation",
+            "contact_person": "Original Contact",
+        },
+    )
+    assert res1.status_code == 201
+
+    # Second registration with same email
+    res2 = await async_client.post(
+        "/api/v1/auth/register-provider",
+        json={
+            "email": email,
+            "password": password,
+            "organization_name": "Duplicate Foundation",
+            "contact_person": "Duplicate Contact",
+        },
+    )
+    assert res2.status_code == 409
+    assert "already exists" in res2.json()["detail"]
+
+
+# ==============================================================================
+# SCENARIO 3B: INVALID CREDENTIALS FOR PROVIDER AND ADMIN
+# ==============================================================================
+@pytest.mark.anyio
+async def test_invalid_credentials_returns_401(async_client: AsyncClient):
+    """Verify login with wrong password or nonexistent email returns 401 Unauthorized."""
+    email = f"cred_test_{uuid.uuid4().hex[:8]}@example.com"
+    password = "CorrectPassword123!"
+
+    # Register user
+    reg = await async_client.post(
+        "/api/v1/auth/register-provider",
+        json={
+            "email": email,
+            "password": password,
+            "organization_name": "Credential Testing Org",
+        },
+    )
+    assert reg.status_code == 201
+
+    # Wrong password
+    wrong_pwd = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "WrongPassword999!"},
+    )
+    assert wrong_pwd.status_code == 401
+    assert wrong_pwd.json()["detail"] == "Incorrect email or password"
+
+    # Nonexistent email
+    no_user = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": "nonexistent_email_12345@example.com", "password": password},
+    )
+    assert no_user.status_code == 401
+    assert no_user.json()["detail"] == "Incorrect email or password"
+
+
+# ==============================================================================
+# SCENARIO 4B: PROVIDER ROLE ASSIGNMENT AND COMPLETE PROFILE DETAILS
+# ==============================================================================
+@pytest.mark.anyio
+async def test_provider_role_assignment_and_full_profile(async_client: AsyncClient):
+    """Verify provider registration correctly assigns PROVIDER role and creates full profile."""
+    email = f"full_prov_{uuid.uuid4().hex[:8]}@tata.org"
+    password = "StrongPassword123!"
+
+    reg_res = await async_client.post(
+        "/api/v1/auth/register-provider",
+        json={
+            "email": email,
+            "password": password,
+            "organization_name": "Tata Trusts Foundation",
+            "contact_person": "Dr. Ratan Tata",
+            "website": "https://tatatrusts.org",
+            "phone": "+91 22 6665 8282",
+            "description": "Pioneering philanthropic organization in India.",
+        },
+    )
+    assert reg_res.status_code == 201
+    user_data = reg_res.json()
+    assert user_data["role"] == "PROVIDER"
+    assert user_data["provider_profile"] is not None
+    assert user_data["provider_profile"]["organization_name"] == "Tata Trusts Foundation"
+    assert user_data["provider_profile"]["contact_person"] == "Dr. Ratan Tata"
+    assert user_data["provider_profile"]["website"] == "https://tatatrusts.org"
+    assert user_data["provider_profile"]["phone"] == "+91 22 6665 8282"
+    assert "philanthropic" in user_data["provider_profile"]["description"]
+
+    # Log in and check /auth/me
+    login_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_res.status_code == 200
+    token = login_res.json()["access_token"]
+
+    me_res = await async_client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert me_res.status_code == 200
+    me_data = me_res.json()
+    assert me_data["role"] == "PROVIDER"
+    assert me_data["provider_profile"]["contact_person"] == "Dr. Ratan Tata"
+
+
+# ==============================================================================
+# SCENARIO 5B: PENDING PROVIDER APPROVAL BEHAVIOR AND ADMIN APPROVAL
+# ==============================================================================
+@pytest.mark.anyio
+async def test_pending_provider_approval_lifecycle(async_client: AsyncClient):
+    """Verify provider created with pending_approval=True reports is_approved=False until Admin approves."""
+    email = f"pending_prov_{uuid.uuid4().hex[:8]}@newfoundation.org"
+    password = "SecurePassword123!"
+
+    # 1. Register with pending_approval=True
+    reg_res = await async_client.post(
+        "/api/v1/auth/register-provider",
+        json={
+            "email": email,
+            "password": password,
+            "organization_name": "Unverified New Foundation",
+            "pending_approval": True,
+        },
+    )
+    assert reg_res.status_code == 201
+    prof = reg_res.json()["provider_profile"]
+    assert prof["is_approved"] is False
+
+    # 2. Login as pending provider
+    login_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_res.status_code == 200
+    prov_token = login_res.json()["access_token"]
+    prov_headers = {"Authorization": f"Bearer {prov_token}"}
+
+    # /auth/me reports is_approved=False
+    me_res = await async_client.get("/api/v1/auth/me", headers=prov_headers)
+    assert me_res.status_code == 200
+    assert me_res.json()["provider_profile"]["is_approved"] is False
+
+    # /provider/profile reports is_approved=False
+    profile_res = await async_client.get("/api/v1/provider/profile", headers=prov_headers)
+    assert profile_res.status_code == 200
+    assert profile_res.json()["is_approved"] is False
+    provider_id = profile_res.json()["id"]
+
+    # 3. Create Admin user
+    admin_data = await register_and_login(async_client, email_prefix="admin_approver", role="STUDENT")
+    async with TestAsyncSessionLocal() as session:
+        await session.execute(
+            update(User).where(User.id == admin_data["user_id"]).values(role=UserRole.ADMIN)
+        )
+        await session.commit()
+
+    # 4. Admin inspects providers list and approves
+    admin_prov_list = await async_client.get("/api/v1/admin/providers", headers=admin_data["headers"])
+    assert admin_prov_list.status_code == 200
+
+    approve_res = await async_client.patch(
+        f"/api/v1/admin/providers/{provider_id}/approve?approved=true",
+        headers=admin_data["headers"],
+    )
+    assert approve_res.status_code == 200
+    assert approve_res.json()["is_approved"] is True
+
+    # 5. Provider now sees is_approved=True
+    updated_me = await async_client.get("/api/v1/auth/me", headers=prov_headers)
+    assert updated_me.status_code == 200
+    assert updated_me.json()["provider_profile"]["is_approved"] is True
+
+    # 6. Admin can also revoke approval
+    revoke_res = await async_client.patch(
+        f"/api/v1/admin/providers/{provider_id}/approve?approved=false",
+        headers=admin_data["headers"],
+    )
+    assert revoke_res.status_code == 200
+    assert revoke_res.json()["is_approved"] is False
+
+
+# ==============================================================================
+# SCENARIO 8B: ADMIN LOGIN AND IMMEDIATE ACCESS TO DASHBOARD
+# ==============================================================================
+@pytest.mark.anyio
+async def test_genuine_admin_login_and_moderation_access(async_client: AsyncClient):
+    """Verify genuine Admin logs in through /auth/login and accesses admin dashboard stats."""
+    admin_email = f"genuine_admin_{uuid.uuid4().hex[:8]}@scholarhub.edu"
+    admin_pwd = "AdminSuperSecret123!"
+
+    # Register base account
+    reg_res = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": admin_email, "password": admin_pwd},
+    )
+    assert reg_res.status_code == 201
+    user_id = uuid.UUID(reg_res.json()["id"])
+
+    # Secure promotion in DB (same as admin CLI tool)
+    async with TestAsyncSessionLocal() as session:
+        await session.execute(
+            update(User).where(User.id == user_id).values(role=UserRole.ADMIN)
+        )
+        await session.commit()
+
+    # Admin Login via /auth/login
+    login_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": admin_email, "password": admin_pwd},
+    )
+    assert login_res.status_code == 200
+    token = login_res.json()["access_token"]
+    admin_headers = {"Authorization": f"Bearer {token}"}
+
+    # Verify role in /auth/me
+    me_res = await async_client.get("/api/v1/auth/me", headers=admin_headers)
+    assert me_res.status_code == 200
+    assert me_res.json()["role"] == "ADMIN"
+
+    # Verify access to admin moderation dashboard
+    stats_res = await async_client.get("/api/v1/admin/dashboard/stats", headers=admin_headers)
+    assert stats_res.status_code == 200
+    assert "pending_scholarships" in stats_res.json()
+

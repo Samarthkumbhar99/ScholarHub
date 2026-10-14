@@ -11,6 +11,16 @@ export interface RegisterPayload {
   password: string;
 }
 
+export interface ProviderRegisterPayload {
+  email: string;
+  password: string;
+  organization_name: string;
+  contact_person?: string;
+  website?: string;
+  phone?: string;
+  description?: string;
+}
+
 export interface TokenResponseData {
   access_token: string;
   token_type: string;
@@ -60,6 +70,16 @@ export const authService = {
       {
         email: payload.email.trim().toLowerCase(),
         password: payload.password,
+      }
+    );
+  },
+
+  async registerProvider(payload: ProviderRegisterPayload): Promise<ApiResponse<BackendUserResponse>> {
+    return apiClient.post<BackendUserResponse, ProviderRegisterPayload>(
+      API_ENDPOINTS.AUTH.REGISTER_PROVIDER,
+      {
+        ...payload,
+        email: payload.email.trim().toLowerCase(),
       }
     );
   },

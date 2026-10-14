@@ -22,6 +22,7 @@ import {
   ProviderScholarshipItem,
 } from '../../services/providerService';
 import { colors } from '../../theme';
+import { showConfirmDialog, showMessageDialog } from '../../utils';
 
 type ProviderDashboardNavProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -74,17 +75,24 @@ export const ProviderDashboardScreen: React.FC = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to log out of your provider account?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => {
-          dispatch(logout());
-          navigation.replace('Auth');
-        },
+    showConfirmDialog({
+      title: 'Sign Out',
+      message: 'Are you sure you want to log out of your provider account?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () => {
+        dispatch(logout());
+        try {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
+        } catch {
+          navigation.navigate('Auth' as any);
+        }
       },
-    ]);
+    });
   };
 
   const openCreateModal = () => {
@@ -169,21 +177,21 @@ export const ProviderDashboardScreen: React.FC = () => {
   };
 
   const handleDelete = (id: string, name: string) => {
-    Alert.alert('Delete Listing', `Are you sure you want to delete "${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await providerService.deleteScholarship(id);
-            loadSubmissions();
-          } catch (err: any) {
-            Alert.alert('Error', err.response?.data?.detail || 'Failed to delete listing.');
-          }
-        },
+    showConfirmDialog({
+      title: 'Delete Listing',
+      message: `Are you sure you want to delete "${name}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await providerService.deleteScholarship(id);
+          loadSubmissions();
+        } catch (err: any) {
+          showMessageDialog('Error', err.response?.data?.detail || 'Failed to delete listing.');
+        }
       },
-    ]);
+    });
   };
 
   // Metric counts
@@ -221,9 +229,15 @@ export const ProviderDashboardScreen: React.FC = () => {
               <Text className="text-xs font-bold text-amber-400 uppercase tracking-widest mr-2">
                 PROVIDER PORTAL
               </Text>
-              <View className="bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">
-                <Text className="text-[10px] font-semibold text-emerald-300">Active</Text>
-              </View>
+              {user?.providerProfile?.isApproved === false ? (
+                <View className="bg-amber-950/80 border border-amber-500/40 px-2 py-0.5 rounded-full">
+                  <Text className="text-[10px] font-semibold text-amber-300">Pending Approval</Text>
+                </View>
+              ) : (
+                <View className="bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                  <Text className="text-[10px] font-semibold text-emerald-300">Active</Text>
+                </View>
+              )}
             </View>
             <Text className="text-2xl font-black text-white" numberOfLines={1}>
               {orgName}
@@ -250,6 +264,21 @@ export const ProviderDashboardScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Pending Approval Notice Banner */}
+      {user?.providerProfile?.isApproved === false && (
+        <View className="bg-amber-50 border-b border-amber-200 px-5 py-3 flex-row items-center">
+          <Text className="text-xl mr-3">⏳</Text>
+          <View className="flex-1">
+            <Text className="text-xs font-bold text-amber-950">
+              Provider Account Pending Administrator Approval
+            </Text>
+            <Text className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+              Your organization credentials are currently undergoing review by ScholarHub administrators. You may prepare and submit scholarship listings; they will be queued for moderation.
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Metrics Row */}
       <View className="flex-row px-4 py-4 gap-2 bg-white border-b border-slate-200">

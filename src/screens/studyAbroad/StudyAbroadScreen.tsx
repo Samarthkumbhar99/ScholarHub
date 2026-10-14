@@ -14,7 +14,7 @@ import {
   MOCK_COUNTRIES,
   MOCK_UNIVERSITIES,
   MOCK_COURSES,
-} from './data/mockStudyAbroad';
+} from './data/studyAbroadData';
 import { searchStudyAbroad } from '../../utils/studyAbroadUtils';
 import {
   ScreenContainer,

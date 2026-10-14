@@ -13,6 +13,7 @@ import {
 } from '../../components/common';
 import { OutlineButton } from '../../components/buttons';
 import { colors } from '../../theme';
+import { showConfirmDialog } from '../../utils';
 
 type SettingsNavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -37,21 +38,21 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out from your ScholarHub account on this device?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(logout());
-            navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
-          },
-        },
-      ]
-    );
+    showConfirmDialog({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out from your ScholarHub account on this device?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () => {
+        dispatch(logout());
+        try {
+          navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+        } catch {
+          navigation.navigate('Auth' as any);
+        }
+      },
+    });
   };
 
   return (

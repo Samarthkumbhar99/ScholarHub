@@ -19,9 +19,9 @@ import {
 } from '../../components/common';
 import { SearchInput } from '../../components/inputs';
 import { ScholarshipFilterState, ScholarshipItem, SortOption } from './types';
-import { MOCK_SCHOLARSHIPS } from './data/mockScholarships';
 import {
   filterScholarships,
+  deduplicateScholarships,
   countActiveFilters,
   initialFilterState,
 } from './utils/filterScholarships';
@@ -51,9 +51,9 @@ export const ScholarshipsScreen: React.FC = () => {
     dispatch(fetchSavedScholarshipsThunk());
   }, [dispatch]);
 
-  // Source list of scholarships: backend data
+  // Source list of scholarships: backend data with duplicate prevention
   const sourceScholarships = useMemo(() => {
-    return reduxScholarships || [];
+    return deduplicateScholarships(reduxScholarships || []);
   }, [reduxScholarships]);
 
   // Filter & Search State

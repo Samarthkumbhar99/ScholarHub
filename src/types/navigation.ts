@@ -6,8 +6,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
  * Authentication Stack Routes
  */
 export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
+  Login: { initialRole?: 'student' | 'provider' | 'admin' } | undefined;
+  Register: { initialRole?: 'student' | 'provider' } | undefined;
 };
 
 /**

@@ -3,8 +3,7 @@ import {
   MOCK_COUNTRIES,
   MOCK_UNIVERSITIES,
   MOCK_COURSES,
-} from '../screens/studyAbroad/data/mockStudyAbroad';
-import { MOCK_SCHOLARSHIPS } from '../screens/scholarships/data/mockScholarships';
+} from '../screens/studyAbroad/data/studyAbroadData';
 import { ScholarshipItem } from '../screens/scholarships/types';
 
 /**
@@ -125,7 +124,7 @@ export const getCourseById = (
  */
 export const getScholarshipsForUniversity = (
   university: University,
-  scholarships: ScholarshipItem[] = MOCK_SCHOLARSHIPS
+  scholarships: ScholarshipItem[] = []
 ): ScholarshipItem[] => {
   if (!university.scholarshipIds || university.scholarshipIds.length === 0) {
     return [];

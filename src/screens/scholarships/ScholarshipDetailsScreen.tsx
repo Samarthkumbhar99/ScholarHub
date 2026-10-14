@@ -31,7 +31,6 @@ import {
   OutlineButton,
   SecondaryButton,
 } from '../../components/buttons';
-import { MOCK_SCHOLARSHIPS } from './data/mockScholarships';
 import { MatchScoreBadge } from './components/MatchScoreBadge';
 
 import { CompareSelectionBar } from './components/CompareSelectionBar';
@@ -65,11 +64,10 @@ export const ScholarshipDetailsScreen: React.FC = () => {
     }
   }, [dispatch, scholarshipId]);
 
-  // Find scholarship from backend or fallback to mock
+  // Find scholarship from live backend state
   const scholarship =
     (selectedScholarship && selectedScholarship.id === scholarshipId ? selectedScholarship : null) ||
-    reduxScholarships.find((item) => item.id === scholarshipId) ||
-    MOCK_SCHOLARSHIPS.find((item) => item.id === scholarshipId);
+    reduxScholarships.find((item) => item.id === scholarshipId);
 
   // If scholarship not found, display graceful error state
   if (!scholarship) {

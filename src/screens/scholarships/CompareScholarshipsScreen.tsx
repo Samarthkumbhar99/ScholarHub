@@ -21,7 +21,6 @@ import {
   EmptyState,
 } from '../../components/common';
 import { PrimaryButton, OutlineButton } from '../../components/buttons';
-import { MOCK_SCHOLARSHIPS } from './data/mockScholarships';
 import { MatchScoreBadge } from './components/MatchScoreBadge';
 import { ScholarshipItem } from './types';
 
@@ -39,9 +38,9 @@ export const CompareScholarshipsScreen: React.FC = () => {
 
   const { comparedScholarshipIds, items: reduxScholarships } = useAppSelector((state) => state.scholarships);
 
-  // Retrieve full scholarship objects for compared IDs
+  // Retrieve full scholarship objects for compared IDs from genuine backend state
   const comparedScholarships = useMemo(() => {
-    const source = reduxScholarships && reduxScholarships.length > 0 ? reduxScholarships : MOCK_SCHOLARSHIPS;
+    const source = reduxScholarships || [];
     return comparedScholarshipIds
       .map((id) => source.find((item) => item.id === id))
       .filter((item): item is ScholarshipItem => item !== undefined);

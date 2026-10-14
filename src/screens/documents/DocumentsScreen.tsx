@@ -3,10 +3,6 @@ import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
-  uploadDocument,
-  replaceDocument,
-  removeDocument,
-  resetDocuments,
   fetchDocumentsThunk,
   uploadDocumentThunk,
   replaceDocumentThunk,
@@ -144,7 +140,7 @@ export const DocumentsScreen: React.FC = () => {
           try {
             await dispatch(
               replaceDocumentThunk({
-                id: targetDoc.id,
+                documentId: targetDoc.id,
                 params: {
                   fileUri: asset.uri,
                   fileName: asset.name,
@@ -155,18 +151,8 @@ export const DocumentsScreen: React.FC = () => {
               })
             ).unwrap();
             showFeedback('success', `Updated and replaced "${targetDoc.name}" successfully.`);
-          } catch {
-            dispatch(
-              replaceDocument({
-                id: targetDoc.id,
-                fileName: asset.name,
-                fileSizeBytes: asset.size,
-                fileUrl: asset.uri,
-                mimeType: asset.mimeType,
-                uploadedAt: new Date().toISOString(),
-              })
-            );
-            showFeedback('success', `Updated and replaced "${targetDoc.name}" successfully.`);
+          } catch (err: any) {
+            showFeedback('error', err?.message || `Failed to replace "${targetDoc.name}". Please try again.`);
           }
         } else {
           try {
@@ -180,18 +166,8 @@ export const DocumentsScreen: React.FC = () => {
               })
             ).unwrap();
             showFeedback('success', `Uploaded "${targetDoc.name}" successfully!`);
-          } catch {
-            dispatch(
-              uploadDocument({
-                id: targetDoc.id,
-                fileName: asset.name,
-                fileSizeBytes: asset.size,
-                fileUrl: asset.uri,
-                mimeType: asset.mimeType,
-                uploadedAt: new Date().toISOString(),
-              })
-            );
-            showFeedback('success', `Uploaded "${targetDoc.name}" successfully!`);
+          } catch (err: any) {
+            showFeedback('error', err?.message || `Failed to upload "${targetDoc.name}". Please try again.`);
           }
         }
       }
@@ -221,10 +197,10 @@ export const DocumentsScreen: React.FC = () => {
           onPress: async () => {
             try {
               await dispatch(deleteDocumentThunk(doc.id)).unwrap();
-            } catch {
-              dispatch(removeDocument(doc.id));
+              showFeedback('success', `Removed "${doc.name}" from repository.`);
+            } catch (err: any) {
+              showFeedback('error', err?.message || `Failed to remove "${doc.name}".`);
             }
-            showFeedback('success', `Removed "${doc.name}" from repository.`);
           },
         },
       ]
@@ -479,7 +455,7 @@ export const DocumentsScreen: React.FC = () => {
                 ? 'Clear Search ✕'
                 : selectedCategory !== 'ALL' || statusFilter !== 'all'
                 ? 'Reset Filters ↺'
-                : 'Reset All Documents ↺'
+                : undefined
             }
             onActionPress={() => {
               if (searchQuery) {
@@ -487,8 +463,6 @@ export const DocumentsScreen: React.FC = () => {
               } else if (selectedCategory !== 'ALL' || statusFilter !== 'all') {
                 setSelectedCategory('ALL');
                 setStatusFilter('all');
-              } else {
-                dispatch(resetDocuments());
               }
             }}
           />
@@ -506,26 +480,6 @@ export const DocumentsScreen: React.FC = () => {
             ))}
           </View>
         )}
-
-        {/* Reset / Demo Helper Tool */}
-        <Card variant="outlined" className="p-4 items-center bg-slate-100 border-slate-200">
-          <Text className="text-xs font-bold text-slate-700 text-center mb-1">
-            Need to Restore Initial Mock State?
-          </Text>
-          <Text className="text-[11px] text-slate-500 text-center mb-3">
-            Reset document repository to default pre-loaded verified test files.
-          </Text>
-          <OutlineButton
-            title="Reset Documents Repository ↺"
-            size="sm"
-            className="border-slate-300 bg-white"
-            textClassName="text-slate-700 font-bold"
-            onPress={() => {
-              dispatch(resetDocuments());
-              showFeedback('success', 'Document repository reset to default state.');
-            }}
-          />
-        </Card>
       </ScreenContainer>
 
       {/* Metadata Viewer Modal */}

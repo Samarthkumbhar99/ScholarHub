@@ -45,10 +45,11 @@ async def create_admin_user(email: str, password: str) -> None:
         existing = res.scalar_one_or_none()
 
         if existing is not None:
-            print(f"[INFO] User '{normalized_email}' already exists. Promoting to ADMIN...")
+            print(f"[INFO] User '{normalized_email}' already exists. Updating password and ensuring ADMIN role...")
             existing.role = UserRole.ADMIN
+            existing.password_hash = hashed_pwd
             await session.commit()
-            print(f"[SUCCESS] Existing user '{normalized_email}' updated to ADMIN.")
+            print(f"[SUCCESS] Existing user '{normalized_email}' updated to ADMIN with provided password.")
             return
 
         new_admin = User(

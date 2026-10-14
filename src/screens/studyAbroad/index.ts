@@ -9,5 +9,5 @@ export * from './CountryDetailsScreen';
 export * from './UniversityDetailsScreen';
 export * from './CourseDetailsScreen';
 export * from './components';
-export * from './data/mockStudyAbroad';
+export * from './data/studyAbroadData';
 export { default } from './StudyAbroadScreen';

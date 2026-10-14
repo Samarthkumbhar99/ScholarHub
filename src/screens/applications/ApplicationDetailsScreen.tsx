@@ -86,12 +86,16 @@ export const ApplicationDetailsScreen: React.FC = () => {
           status: nextStatus,
         })
       ).unwrap();
-    } catch {
-      dispatch(advanceApplicationStatus(application.id));
+      setActionFeedback(`Application stage moved to: ${nextMeta?.label}`);
+      setTimeout(() => setActionFeedback(null), 3500);
+    } catch (err: any) {
+      Alert.alert(
+        'Update Failed',
+        typeof err === 'string'
+          ? err
+          : 'Failed to update application status on the server. Please check your connection and retry.'
+      );
     }
-
-    setActionFeedback(`Application stage moved to: ${nextMeta?.label}`);
-    setTimeout(() => setActionFeedback(null), 3500);
   };
 
   const handleResetStatus = async () => {
@@ -102,12 +106,16 @@ export const ApplicationDetailsScreen: React.FC = () => {
           status: 'SAVED',
         })
       ).unwrap();
-    } catch {
-      dispatch(resetApplicationStatus(application.id));
+      setActionFeedback('Application reset to Stage 1: Saved');
+      setTimeout(() => setActionFeedback(null), 3500);
+    } catch (err: any) {
+      Alert.alert(
+        'Reset Failed',
+        typeof err === 'string'
+          ? err
+          : 'Failed to reset application status on the server.'
+      );
     }
-
-    setActionFeedback('Application reset to Stage 1: Saved');
-    setTimeout(() => setActionFeedback(null), 3500);
   };
 
   const handleOpenScholarshipDetails = () => {
@@ -219,20 +227,20 @@ export const ApplicationDetailsScreen: React.FC = () => {
           onOpenDocumentCenter={handleOpenDocumentCenter}
         />
 
-        {/* Development-Only Stage Controller */}
-        <Card variant="outlined" className="p-4 mb-4 bg-indigo-50/40 border-indigo-200">
+        {/* Application Lifecycle Progression Controls */}
+        <Card variant="outlined" className="p-4 mb-4 bg-slate-50 border-slate-200">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-1.5">
-              <Text className="text-base">🛠️</Text>
-              <Text className="text-xs font-extrabold text-indigo-900">
-                Development Stage Controller (Mock Workflow)
+              <Text className="text-base">📋</Text>
+              <Text className="text-xs font-extrabold text-slate-900">
+                Application Progress Controls
               </Text>
             </View>
-            <Badge variant="neutral" size="sm" label="Demo Tool" />
+            <Badge variant="neutral" size="sm" label="Lifecycle" />
           </View>
 
-          <Text className="text-[11px] text-indigo-800/80 mb-3 leading-relaxed">
-            Test the sequential 7-stage application workflow. Advancing moves the mock application strictly one stage forward without skipping.
+          <Text className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+            Advance your scholarship application as you complete requirements and gather supporting documentation.
           </Text>
 
           <View className="gap-2">
@@ -240,7 +248,7 @@ export const ApplicationDetailsScreen: React.FC = () => {
               <PrimaryButton
                 title={`Advance to: ${nextMeta?.label} ➔`}
                 size="sm"
-                className="bg-indigo-600 active:bg-indigo-700"
+                className="bg-primary-600 active:bg-primary-700"
                 onPress={handleAdvanceStatus}
               />
             ) : (
@@ -255,8 +263,8 @@ export const ApplicationDetailsScreen: React.FC = () => {
               <OutlineButton
                 title="Reset Stage to: Saved ↺"
                 size="sm"
-                className="border-indigo-300"
-                textClassName="text-indigo-700 font-bold"
+                className="border-slate-300"
+                textClassName="text-slate-700 font-bold"
                 onPress={handleResetStatus}
               />
             )}

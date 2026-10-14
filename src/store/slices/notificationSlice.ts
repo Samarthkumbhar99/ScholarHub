@@ -18,100 +18,18 @@ export interface NotificationState {
   total: number;
 }
 
-// Generate relative mock dates
-const now = new Date();
-const hoursAgo = (hours: number) =>
-  new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
-const daysAgo = (days: number) =>
-  new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
-
-export const initialDefaultNotifications: NotificationItem[] = [
-  // 1. Deadline Reminder (Today)
-  {
-    id: 'notif_deadline_01',
-    type: 'DEADLINE_REMINDER',
-    title: '⏰ Application Deadline Alert',
-    message: 'National STEM Fellowship application window closes in 3 days on Sept 30. Complete your submission to ensure consideration.',
-    createdAt: hoursAgo(2),
-    isRead: false,
-    scholarshipId: 'sch_stem_01',
-    applicationId: 'app_stem_01',
-    priority: 'high',
-  },
-  // 2. New Scholarship Alert (Today)
-  {
-    id: 'notif_match_02',
-    type: 'NEW_SCHOLARSHIP',
-    title: '🌟 New Matching Scholarship Added',
-    message: 'Reliance Foundation Undergraduate Scholarship has been matched to your academic profile with a 94% eligibility score.',
-    createdAt: hoursAgo(5),
-    isRead: false,
-    scholarshipId: 'sch_reliance_02',
-    priority: 'normal',
-  },
-  // 3. Application Confirmation (Yesterday)
-  {
-    id: 'notif_applied_03',
-    type: 'APPLICATION_CONFIRMATION',
-    title: '📤 Application Dossier Submitted',
-    message: 'Your application for National STEM Fellowship was successfully logged with the State Nodal Department.',
-    createdAt: daysAgo(1),
-    isRead: false,
-    scholarshipId: 'sch_stem_01',
-    applicationId: 'app_stem_01',
-    priority: 'normal',
-  },
-  // 4. Missing Document Alert (Yesterday)
-  {
-    id: 'notif_doc_04',
-    type: 'MISSING_DOCUMENT',
-    title: '⚠️ Action Required: Missing Income Certificate',
-    message: 'Reliance Foundation requires an Income Certificate (Below ₹6.0L) uploaded to your repository before final submission.',
-    createdAt: daysAgo(1.5),
-    isRead: false,
-    scholarshipId: 'sch_reliance_02',
-    applicationId: 'app_reliance_02',
-    priority: 'high',
-  },
-  // 5. Result Notification (Earlier)
-  {
-    id: 'notif_result_05',
-    type: 'RESULT',
-    title: '🏆 Verification Result: Cleared',
-    message: 'Your socio-economic and academic verification for National STEM Fellowship cleared stage 4 review.',
-    createdAt: daysAgo(3),
-    isRead: true,
-    scholarshipId: 'sch_stem_01',
-    applicationId: 'app_stem_01',
-    priority: 'normal',
-  },
-  // 6. Interview Schedule Notification (Earlier)
-  {
-    id: 'notif_interview_06',
-    type: 'INTERVIEW',
-    title: '🎙️ Panel Interview Scheduled',
-    message: 'Oxford Global Scholars Exchange Fellowship has scheduled your virtual panel interview assessment for next week.',
-    createdAt: daysAgo(5),
-    isRead: true,
-    scholarshipId: 'sch_oxford_03',
-    applicationId: 'app_oxford_03',
-    priority: 'high',
-  },
-];
-
-export const initialNotifications = initialDefaultNotifications;
-
 const countUnread = (items: NotificationItem[]): number => {
   return items.filter((n) => !n.isRead).length;
 };
 
+// Initial state starts empty until fetched from live FastAPI backend
 const initialState: NotificationState = {
-  items: initialDefaultNotifications,
-  unreadCount: countUnread(initialDefaultNotifications),
+  items: [],
+  unreadCount: 0,
   filterTab: 'all',
   isLoading: false,
   error: null,
-  total: initialDefaultNotifications.length,
+  total: 0,
 };
 
 // ==============================================================================
@@ -165,8 +83,8 @@ export const markAllNotificationsReadThunk = createAsyncThunk(
   'notifications/markAllNotificationsRead',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await notificationService.markAllAsRead();
-      return response.data.updated_count;
+      await notificationService.markAllAsRead();
+      return true;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to mark all as read');
     }
@@ -227,10 +145,10 @@ export const notificationSlice = createSlice({
       state.total = state.items.length;
     },
     resetNotifications: (state) => {
-      state.items = initialDefaultNotifications;
-      state.unreadCount = countUnread(initialDefaultNotifications);
+      state.items = [];
+      state.unreadCount = 0;
       state.filterTab = 'all';
-      state.total = initialDefaultNotifications.length;
+      state.total = 0;
     },
   },
   extraReducers: (builder) => {
@@ -262,14 +180,14 @@ export const notificationSlice = createSlice({
       const notif = state.items.find((item) => item.id === action.payload);
       if (notif && !notif.isRead) {
         notif.isRead = true;
-        state.unreadCount = countUnread(state.items);
+        state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
     });
 
     // Mark all read
     builder.addCase(markAllNotificationsReadThunk.fulfilled, (state) => {
-      state.items.forEach((item) => {
-        item.isRead = true;
+      state.items.forEach((n) => {
+        n.isRead = true;
       });
       state.unreadCount = 0;
     });
@@ -278,7 +196,7 @@ export const notificationSlice = createSlice({
     builder.addCase(deleteNotificationThunk.fulfilled, (state, action) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
       state.unreadCount = countUnread(state.items);
-      state.total = state.items.length;
+      state.total = Math.max(0, state.total - 1);
     });
   },
 });

@@ -5,7 +5,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, cast, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -96,8 +96,17 @@ async def list_scholarships(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ScholarshipListResponse:
-    """Retrieve paginated and filtered scholarships with deterministic sorting."""
-    stmt = select(Scholarship).where(Scholarship.is_published_condition())
+    """Retrieve paginated and filtered scholarships with deterministic sorting and duplicate prevention."""
+    dedup_subq = (
+        select(cast(func.min(cast(Scholarship.id, String)), Scholarship.id.type))
+        .where(Scholarship.is_published_condition())
+        .group_by(func.lower(Scholarship.name), func.lower(Scholarship.provider))
+    ).scalar_subquery()
+
+    stmt = select(Scholarship).where(
+        Scholarship.id.in_(dedup_subq),
+        Scholarship.is_published_condition(),
+    )
 
     # 1. Text Search across relevant textual columns
     if q and q.strip():
@@ -324,10 +333,19 @@ async def get_scholarship_recommendations(
     academic = acad_res.scalar_one_or_none()
     preferences = fin_res.scalar_one_or_none()
 
-    # 2. Query available scholarships (bounded limit for efficient evaluation)
+    # 2. Query available scholarships (bounded limit with distinct deduplication)
+    dedup_subq = (
+        select(cast(func.min(cast(Scholarship.id, String)), Scholarship.id.type))
+        .where(Scholarship.is_published_condition())
+        .group_by(func.lower(Scholarship.name), func.lower(Scholarship.provider))
+    ).scalar_subquery()
+
     sch_stmt = (
         select(Scholarship)
-        .where(Scholarship.is_published_condition())
+        .where(
+            Scholarship.id.in_(dedup_subq),
+            Scholarship.is_published_condition(),
+        )
         .order_by(Scholarship.deadline.asc())
         .limit(100)
     )

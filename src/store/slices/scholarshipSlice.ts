@@ -45,9 +45,20 @@ export const fetchScholarshipsThunk = createAsyncThunk(
   async (params: ListScholarshipsParams | undefined, { rejectWithValue }) => {
     try {
       const response = await scholarshipService.listScholarships(params);
-      const items = (response.data.items || []).map((s) =>
+      const rawItems = (response.data.items || []).map((s) =>
         mapBackendScholarshipToFrontend(s)
       );
+      const seenIds = new Set<string>();
+      const seenSignatures = new Set<string>();
+      const items: Scholarship[] = [];
+      for (const item of rawItems) {
+        const sig = `${(item.title || '').trim().toLowerCase()}::${(item.provider || '').trim().toLowerCase()}`;
+        if (!seenIds.has(item.id) && !seenSignatures.has(sig)) {
+          seenIds.add(item.id);
+          seenSignatures.add(sig);
+          items.push(item);
+        }
+      }
       return {
         items,
         total: response.data.total,
