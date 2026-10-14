@@ -41,9 +41,17 @@ class ScholarshipListItem(BaseModel):
     provider: str
     description: str
     amount: Decimal = Field(..., description="Award amount in standard monetary units")
+    currency: str = Field(default="INR", description="Three-letter ISO currency code")
     deadline: date
     eligibility: Optional[str] = None
     official_website: Optional[str] = None
+    is_verified: bool = Field(default=False, description="Verification status flag")
+    review_status: str = Field(default="LEGACY", description="Publication review lifecycle state")
+    source_id: Optional[UUID] = None
+    source_name: Optional[str] = None
+    external_id: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    last_collected_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -58,13 +66,25 @@ class ScholarshipResponse(BaseModel):
     provider: str
     description: str
     amount: Decimal
+    currency: str = Field(default="INR", description="Three-letter ISO currency code")
     deadline: date
     eligibility: Optional[str] = None
     benefits: Optional[list[str]] = None
     selection_process: Optional[list[str]] = None
     official_website: Optional[str] = None
+    source_url: Optional[str] = None
+    source_id: Optional[UUID] = None
+    source_name: Optional[str] = None
+    external_id: Optional[str] = None
+    fingerprint: Optional[str] = None
+    is_verified: bool = Field(default=False, description="Verification status flag")
+    review_status: str = Field(default="LEGACY", description="Publication review lifecycle state")
+    rejection_reason: Optional[str] = None
+    last_collected_at: Optional[datetime] = None
+    last_verified_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+
 
 
 class ScholarshipListResponse(BaseModel):

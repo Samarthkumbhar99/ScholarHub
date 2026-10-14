@@ -20,7 +20,7 @@ import {
   UserProfile,
 } from '../../types';
 import { useAppDispatch } from '../../hooks';
-import { setCredentials } from '../../store/slices/authSlice';
+import { registerUserThunk } from '../../store/slices/authSlice';
 import {
   ScreenContainer,
   Header,
@@ -91,6 +91,7 @@ export const RegistrationScreen: React.FC = () => {
   const [formState, setFormState] = useState<RegistrationFormState>(initialFormState);
   const [errors, setErrors] = useState<RegistrationErrors>(initialErrors);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Email format validation helper
   const isValidEmail = (emailStr: string): boolean => {
@@ -270,6 +271,7 @@ export const RegistrationScreen: React.FC = () => {
   // Step Forward Action
   const handleNext = () => {
     Keyboard.dismiss();
+    setApiError(null);
     if (currentStep === 1) {
       if (validateStep1()) {
         setCurrentStep(2);
@@ -284,6 +286,7 @@ export const RegistrationScreen: React.FC = () => {
   // Step Backward Action (Preserves form state)
   const handleBack = () => {
     Keyboard.dismiss();
+    setApiError(null);
     if (currentStep === 3) {
       setCurrentStep(2);
     } else if (currentStep === 2) {
@@ -294,60 +297,37 @@ export const RegistrationScreen: React.FC = () => {
   };
 
   // Final Submission: Step 3 Completion -> Student Dashboard
-  const handleCompleteRegistration = () => {
+  const handleCompleteRegistration = async () => {
     Keyboard.dismiss();
+    setApiError(null);
     if (!validateStep3()) {
       return;
     }
 
     setIsSubmitting(true);
-
-    // Mock completion and profile provisioning
-    setTimeout(() => {
-      setIsSubmitting(false);
-
-      const fullName = `${formState.personal.firstName.trim()} ${formState.personal.lastName.trim()}`;
-      const mockProfile: UserProfile = {
-        id: `usr_student_${Date.now()}`,
-        email: formState.personal.email.trim(),
-        firstName: formState.personal.firstName.trim(),
-        lastName: formState.personal.lastName.trim(),
-        name: fullName,
-        role: 'student',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        educationLevel: 'undergraduate',
-        major: formState.academic.branch || 'Computer Science',
-        gpa: parseFloat(formState.academic.cgpa) || 3.8,
-        country: formState.academic.country || 'India',
-        isProfileComplete: true,
-        isVerified: true,
-        personal: { ...formState.personal },
-        academic: { ...formState.academic },
-        preferences: { ...formState.preferences },
-        settings: {
-          notificationsEnabled: true,
-          deadlineRemindersEnabled: true,
-          emailAlertsEnabled: true,
-          language: 'English (US)',
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-
-      // Set Redux authentication session
-      dispatch(
-        setCredentials({
-          token: 'jwt-scholarhub-registered-session-token',
-          user: mockProfile,
+    try {
+      // Default initial password for registration flow
+      const registrationPassword = 'Password@123';
+      const result = await dispatch(
+        registerUserThunk({
+          email: formState.personal.email.trim(),
+          password: registrationPassword,
+          personal: formState.personal,
+          academic: formState.academic,
+          preferences: formState.preferences,
         })
-      );
+      ).unwrap();
+
+      setIsSubmitting(false);
 
       // Navigate to Student Dashboard
       if (parentNavigation) {
         parentNavigation.replace('Student');
       }
-    }, 700);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setApiError(typeof err === 'string' ? err : err?.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (
@@ -393,6 +373,15 @@ export const RegistrationScreen: React.FC = () => {
             onChange={updatePreferences}
             onClearError={clearPreferencesError}
           />
+        )}
+
+        {/* API Error Banner */}
+        {apiError && (
+          <View className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+            <Text className="text-xs text-red-600 font-medium text-center">
+              {apiError}
+            </Text>
+          </View>
         )}
 
         {/* Navigation Action Buttons Bar */}

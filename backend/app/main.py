@@ -1,5 +1,6 @@
+from contextlib import asynccontextmanager
 import logging
-from typing import Dict
+from typing import AsyncGenerator, Dict
 from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -8,8 +9,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.database import get_db
+from app.services.discovery.scheduler import get_discovery_scheduler
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifecycle management for graceful startup and shutdown."""
+    scheduler = get_discovery_scheduler()
+    if settings.DISCOVERY_SCHEDULE_ENABLED:
+        logger.info("Initializing background scholarship discovery scheduler during startup...")
+        await scheduler.start()
+    else:
+        logger.info("Discovery scheduler startup skipped (DISCOVERY_SCHEDULE_ENABLED=False).")
+
+    try:
+        yield
+    finally:
+        logger.info("Shutting down discovery scheduler during application shutdown...")
+        await scheduler.stop()
+
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -19,6 +39,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # Configure Cross-Origin Resource Sharing (CORS)

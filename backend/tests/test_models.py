@@ -7,6 +7,7 @@ from sqlalchemy.types import String, Numeric, Enum as SAEnum, Boolean, Date, Dat
 from app.core.database import Base
 from app.models import (
     User,
+    UserRole,
     UserSettings,
     StudentProfile,
     AcademicProfile,
@@ -101,6 +102,8 @@ def test_scholarship_model_and_requirements():
 
 def test_enums_and_values():
     """Verify Enum domain models have exact expected values matching frontend."""
+    assert [e.value for e in UserRole] == ["STUDENT", "PROVIDER", "ADMIN"]
+
     assert [e.value for e in StudyPreference] == ["INDIA", "ABROAD", "BOTH"]
 
     assert [e.value for e in ApplicationStatus] == [
@@ -178,9 +181,12 @@ def test_model_instantiations():
     user = User(
         email="test@scholarhub.com",
         password_hash="$2b$12$e8xL...hashed",
+        role=UserRole.STUDENT,
     )
     assert user.email == "test@scholarhub.com"
     assert user.password_hash.startswith("$2b$12")
+    assert user.role == UserRole.STUDENT
+
 
     profile = StudentProfile(
         user=user,

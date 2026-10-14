@@ -7,9 +7,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy.orm import selectinload
+
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from app.models.user import User
+from app.models.user import User, UserRole
 
 # Standard HTTPBearer scheme for Authorization: Bearer <token> header extraction
 http_bearer_scheme = HTTPBearer(auto_error=False)
@@ -42,11 +44,62 @@ async def get_current_user(
     except (jwt.PyJWTError, ValueError):
         raise credentials_exception
 
-    # Query user by primary key UUID
-    result = await db.execute(select(User).where(User.id == user_id))
+    # Query user by primary key UUID with provider_profile loaded
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.provider_profile))
+        .where(User.id == user_id)
+    )
     user = result.scalar_one_or_none()
 
     if user is None:
         raise credentials_exception
 
     return user
+
+
+async def get_current_student(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Validate that the authenticated user has STUDENT role privileges.
+
+    Raises HTTP 403 Forbidden if user is authenticated but does not have the STUDENT role.
+    """
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Student privileges required",
+        )
+    return current_user
+
+
+async def get_current_provider(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Validate that the authenticated user has PROVIDER role privileges.
+
+    Raises HTTP 403 Forbidden if user is authenticated but does not have the PROVIDER role.
+    """
+    if current_user.role != UserRole.PROVIDER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Provider privileges required",
+        )
+    return current_user
+
+
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Validate that the authenticated user has ADMIN role privileges.
+
+    Raises HTTP 403 Forbidden if user is authenticated but does not have the ADMIN role.
+    Raises HTTP 401 Unauthorized if user is unauthenticated (handled by get_current_user).
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Admin privileges required",
+        )
+    return current_user
+

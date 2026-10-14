@@ -1,89 +1,108 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import {
   ApplicationItem,
   ApplicationStatus,
   getNextStatus,
 } from '../../types/application';
+import {
+  applicationService,
+  ListApplicationsParams,
+  ApplicationCreatePayload,
+} from '../../services/applicationService';
+import { mapBackendApplicationToFrontend } from '../../utils/adapters';
 
 export type ApplicationFilterTab = 'all' | 'active' | 'completed';
 
 export interface ApplicationState {
   items: ApplicationItem[];
   filterTab: ApplicationFilterTab;
+  isLoading: boolean;
+  error: string | null;
+  total: number;
 }
 
-const initialApplications: ApplicationItem[] = [
-  {
-    id: 'app_stem_01',
-    scholarshipId: 'sch_stem_01',
-    scholarshipTitle: 'National STEM Fellowship',
-    provider: 'Department of Science & Higher Education',
-    awardAmount: '₹120,000 / year',
-    deadline: '2026-09-30',
-    status: 'UNDER_REVIEW',
-    matchScore: 98,
-    appliedDate: '2026-08-10',
-    lastUpdatedDate: '2026-08-15',
-    requiredDocuments: [
-      'Valid Government Photo ID (Aadhaar Card)',
-      'Official marksheets of previous semester (Min 8.0 CGPA)',
-      'Income Certificate (Below ₹6.0 Lakhs)',
-      'College Enrollment Verification Certificate',
-      'Bonafide student certificate',
-    ],
-    notes: 'Document verification cleared by State Nodal Officer. Under evaluation by academic committee.',
-  },
-  {
-    id: 'app_reliance_02',
-    scholarshipId: 'sch_reliance_02',
-    scholarshipTitle: 'Reliance Foundation Undergraduate Scholarship',
-    provider: 'Reliance Foundation Trust',
-    awardAmount: '₹200,000 / year',
-    deadline: '2026-10-15',
-    status: 'PREPARING_DOCUMENTS',
-    matchScore: 94,
-    appliedDate: '2026-08-14',
-    lastUpdatedDate: '2026-08-18',
-    requiredDocuments: [
-      'Aadhaar Card of student and parent/guardian',
-      'Class 12th Board Marksheet & Entrance scorecard',
-      'Family Income Proof (ITR / Tehsildar Certificate)',
-      'College Fee Receipt & Admission Confirmation Letter',
-      'Bank passbook / cancelled cheque',
-    ],
-    notes: 'Upload your verified family income certificate before final submission.',
-  },
-  {
-    id: 'app_oxford_03',
-    scholarshipId: 'sch_oxford_03',
-    scholarshipTitle: 'Oxford Global Scholars Exchange Fellowship',
-    provider: 'Oxford International Foundation',
-    awardAmount: '£15,000 + Airfare',
-    deadline: '2026-11-01',
-    status: 'INTERVIEW',
-    matchScore: 91,
-    appliedDate: '2026-08-01',
-    lastUpdatedDate: '2026-08-19',
-    requiredDocuments: [
-      'Passport (min 18 months validity)',
-      'Official English Academic Transcripts (Min CGPA 8.5)',
-      'Statement of Purpose (800 words)',
-      '2 Letters of Recommendation from Professors',
-      'IELTS 7.0+ / TOEFL 100+ Scorecard',
-    ],
-    notes: 'Virtual panel interview scheduled for upcoming week.',
-  },
-];
-
 const initialState: ApplicationState = {
-  items: initialApplications,
+  items: [],
   filterTab: 'all',
+  isLoading: false,
+  error: null,
+  total: 0,
 };
+
+// ==============================================================================
+// ASYNC THUNKS
+// ==============================================================================
+
+export const fetchApplicationsThunk = createAsyncThunk(
+  'applications/fetchApplications',
+  async (params: ListApplicationsParams | undefined, { rejectWithValue }) => {
+    try {
+      const response = await applicationService.listApplications(params);
+      const items = (response.data.items || []).map((app) =>
+        mapBackendApplicationToFrontend(app)
+      );
+      return {
+        items,
+        total: response.data.total,
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch applications');
+    }
+  }
+);
+
+export const createApplicationThunk = createAsyncThunk(
+  'applications/createApplication',
+  async (payload: ApplicationCreatePayload, { rejectWithValue }) => {
+    try {
+      const response = await applicationService.createApplication(payload);
+      return mapBackendApplicationToFrontend(response.data);
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to start application');
+    }
+  }
+);
+
+export const updateApplicationStatusThunk = createAsyncThunk(
+  'applications/updateApplicationStatus',
+  async (
+    payload: { applicationId: string; status: ApplicationStatus },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await applicationService.updateApplicationStatus(
+        payload.applicationId,
+        { status: payload.status }
+      );
+      return mapBackendApplicationToFrontend(response.data);
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to update application status');
+    }
+  }
+);
+
+export const deleteApplicationThunk = createAsyncThunk(
+  'applications/deleteApplication',
+  async (applicationId: string, { rejectWithValue }) => {
+    try {
+      await applicationService.deleteApplication(applicationId);
+      return applicationId;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to delete application');
+    }
+  }
+);
 
 export const applicationSlice = createSlice({
   name: 'applications',
   initialState,
   reducers: {
+    setApplications: (state, action: PayloadAction<ApplicationItem[]>) => {
+      state.items = action.payload;
+      state.total = action.payload.length;
+      state.isLoading = false;
+      state.error = null;
+    },
     createOrGetApplication: (
       state,
       action: PayloadAction<{
@@ -103,11 +122,12 @@ export const applicationSlice = createSlice({
       const existing = state.items.find((item) => item.scholarshipId === scholarshipId);
       if (!existing) {
         const todayStr = new Date().toISOString().split('T')[0];
-        const generatedId = scholarshipId.startsWith('sch_')
+        const generatedId = id || (scholarshipId.startsWith('sch_')
           ? `app_${scholarshipId.slice(4)}`
-          : `app_${scholarshipId}`;
+          : `app_${scholarshipId}`);
+
         const newApp: ApplicationItem = {
-          id: id || generatedId,
+          id: generatedId,
           scholarshipId,
           scholarshipTitle,
           provider,
@@ -125,6 +145,7 @@ export const applicationSlice = createSlice({
           notes: 'Application started. Gather required documents to move to next stage.',
         };
         state.items.unshift(newApp);
+        state.total += 1;
       }
     },
     advanceApplicationStatus: (state, action: PayloadAction<string>) => {
@@ -154,11 +175,56 @@ export const applicationSlice = createSlice({
     },
     deleteApplication: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
+      state.total = state.items.length;
     },
+  },
+  extraReducers: (builder) => {
+    // List
+    builder
+      .addCase(fetchApplicationsThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchApplicationsThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload.items;
+        state.total = action.payload.total;
+        state.error = null;
+      })
+      .addCase(fetchApplicationsThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Create
+    builder.addCase(createApplicationThunk.fulfilled, (state, action) => {
+      const existingIdx = state.items.findIndex((a) => a.id === action.payload.id || a.scholarshipId === action.payload.scholarshipId);
+      if (existingIdx >= 0) {
+        state.items[existingIdx] = action.payload;
+      } else {
+        state.items.unshift(action.payload);
+        state.total += 1;
+      }
+    });
+
+    // Update status
+    builder.addCase(updateApplicationStatusThunk.fulfilled, (state, action) => {
+      const index = state.items.findIndex((a) => a.id === action.payload.id);
+      if (index >= 0) {
+        state.items[index] = action.payload;
+      }
+    });
+
+    // Delete
+    builder.addCase(deleteApplicationThunk.fulfilled, (state, action) => {
+      state.items = state.items.filter((a) => a.id !== action.payload);
+      state.total = state.items.length;
+    });
   },
 });
 
 export const {
+  setApplications,
   createOrGetApplication,
   advanceApplicationStatus,
   resetApplicationStatus,

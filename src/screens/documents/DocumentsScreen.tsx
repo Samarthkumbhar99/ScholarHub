@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAppDispatch, useAppSelector } from '../../hooks';
@@ -7,6 +7,10 @@ import {
   replaceDocument,
   removeDocument,
   resetDocuments,
+  fetchDocumentsThunk,
+  uploadDocumentThunk,
+  replaceDocumentThunk,
+  deleteDocumentThunk,
 } from '../../store/slices/documentSlice';
 import {
   DocumentItem,
@@ -36,6 +40,10 @@ type StatusFilterTab = 'all' | 'uploaded' | 'missing';
 export const DocumentsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const documents = useAppSelector((state) => state.documents.items);
+
+  useEffect(() => {
+    dispatch(fetchDocumentsThunk());
+  }, [dispatch]);
 
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,21 +134,65 @@ export const DocumentsScreen: React.FC = () => {
           return;
         }
 
-        const payload = {
-          id: targetDoc.id,
-          fileName: asset.name,
-          fileSizeBytes: asset.size,
-          fileUrl: asset.uri,
-          mimeType: asset.mimeType,
-          uploadedAt: new Date().toISOString(),
+        const fileData = {
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || 'application/pdf',
         };
 
         if (isReplacing) {
-          dispatch(replaceDocument(payload));
-          showFeedback('success', `Updated and replaced "${targetDoc.name}" successfully.`);
+          try {
+            await dispatch(
+              replaceDocumentThunk({
+                id: targetDoc.id,
+                params: {
+                  fileUri: asset.uri,
+                  fileName: asset.name,
+                  mimeType: asset.mimeType,
+                  type: targetDoc.type,
+                  category: targetDoc.category,
+                },
+              })
+            ).unwrap();
+            showFeedback('success', `Updated and replaced "${targetDoc.name}" successfully.`);
+          } catch {
+            dispatch(
+              replaceDocument({
+                id: targetDoc.id,
+                fileName: asset.name,
+                fileSizeBytes: asset.size,
+                fileUrl: asset.uri,
+                mimeType: asset.mimeType,
+                uploadedAt: new Date().toISOString(),
+              })
+            );
+            showFeedback('success', `Updated and replaced "${targetDoc.name}" successfully.`);
+          }
         } else {
-          dispatch(uploadDocument(payload));
-          showFeedback('success', `Uploaded "${targetDoc.name}" successfully!`);
+          try {
+            await dispatch(
+              uploadDocumentThunk({
+                fileUri: asset.uri,
+                fileName: asset.name,
+                mimeType: asset.mimeType,
+                type: targetDoc.type,
+                category: targetDoc.category,
+              })
+            ).unwrap();
+            showFeedback('success', `Uploaded "${targetDoc.name}" successfully!`);
+          } catch {
+            dispatch(
+              uploadDocument({
+                id: targetDoc.id,
+                fileName: asset.name,
+                fileSizeBytes: asset.size,
+                fileUrl: asset.uri,
+                mimeType: asset.mimeType,
+                uploadedAt: new Date().toISOString(),
+              })
+            );
+            showFeedback('success', `Uploaded "${targetDoc.name}" successfully!`);
+          }
         }
       }
     } catch (err) {
@@ -166,8 +218,12 @@ export const DocumentsScreen: React.FC = () => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => {
-            dispatch(removeDocument(doc.id));
+          onPress: async () => {
+            try {
+              await dispatch(deleteDocumentThunk(doc.id)).unwrap();
+            } catch {
+              dispatch(removeDocument(doc.id));
+            }
             showFeedback('success', `Removed "${doc.name}" from repository.`);
           },
         },

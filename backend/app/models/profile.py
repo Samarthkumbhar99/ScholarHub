@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
     String,
+    Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
@@ -232,4 +234,68 @@ class FinancialPreference(Base):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="financial_preference",
+    )
+
+
+class ProviderProfile(Base):
+    """Organization or individual scholarship provider profile."""
+
+    __tablename__ = "provider_profiles"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    organization_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    contact_person: Mapped[Optional[str]] = mapped_column(
+        String(150),
+        nullable=True,
+    )
+    website: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    description: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+    )
+    phone: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+    is_approved: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        server_default="true",
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="provider_profile",
     )

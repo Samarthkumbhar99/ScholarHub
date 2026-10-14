@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   advanceApplicationStatus,
   resetApplicationStatus,
+  updateApplicationStatusThunk,
 } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
@@ -69,7 +70,7 @@ export const ApplicationDetailsScreen: React.FC = () => {
   const currentMeta = APPLICATION_STATUS_DETAILS[application.status];
 
   // Actions
-  const handleAdvanceStatus = () => {
+  const handleAdvanceStatus = async () => {
     if (!nextStatus) {
       Alert.alert(
         'Lifecycle Completed',
@@ -78,13 +79,33 @@ export const ApplicationDetailsScreen: React.FC = () => {
       return;
     }
 
-    dispatch(advanceApplicationStatus(application.id));
+    try {
+      await dispatch(
+        updateApplicationStatusThunk({
+          applicationId: application.id,
+          status: nextStatus,
+        })
+      ).unwrap();
+    } catch {
+      dispatch(advanceApplicationStatus(application.id));
+    }
+
     setActionFeedback(`Application stage moved to: ${nextMeta?.label}`);
     setTimeout(() => setActionFeedback(null), 3500);
   };
 
-  const handleResetStatus = () => {
-    dispatch(resetApplicationStatus(application.id));
+  const handleResetStatus = async () => {
+    try {
+      await dispatch(
+        updateApplicationStatusThunk({
+          applicationId: application.id,
+          status: 'SAVED',
+        })
+      ).unwrap();
+    } catch {
+      dispatch(resetApplicationStatus(application.id));
+    }
+
     setActionFeedback('Application reset to Stage 1: Saved');
     setTimeout(() => setActionFeedback(null), 3500);
   };

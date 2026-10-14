@@ -1,8 +1,9 @@
+import enum
 import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, Enum as SAEnum, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,8 +13,16 @@ if TYPE_CHECKING:
     from app.models.application import Application
     from app.models.document import StudentDocument
     from app.models.notification import Notification
-    from app.models.profile import AcademicProfile, FinancialPreference, StudentProfile
-    from app.models.scholarship import SavedScholarship
+    from app.models.profile import AcademicProfile, FinancialPreference, ProviderProfile, StudentProfile
+    from app.models.scholarship import SavedScholarship, Scholarship
+
+
+class UserRole(str, enum.Enum):
+    """User authorization roles."""
+
+    STUDENT = "STUDENT"
+    PROVIDER = "PROVIDER"
+    ADMIN = "ADMIN"
 
 
 class User(Base):
@@ -35,6 +44,12 @@ class User(Base):
     )
     password_hash: Mapped[str] = mapped_column(
         String(255),
+        nullable=False,
+    )
+    role: Mapped[UserRole] = mapped_column(
+        SAEnum(UserRole, name="user_role_enum", native_enum=True),
+        default=UserRole.STUDENT,
+        server_default=UserRole.STUDENT.value,
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -70,6 +85,13 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    provider_profile: Mapped[Optional["ProviderProfile"]] = relationship(
+        "ProviderProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
     settings: Mapped[Optional["UserSettings"]] = relationship(
         "UserSettings",
         back_populates="user",
@@ -78,6 +100,11 @@ class User(Base):
     )
 
     # 1:N Domain relationships
+    submitted_scholarships: Mapped[list["Scholarship"]] = relationship(
+        "Scholarship",
+        back_populates="submitted_by",
+        foreign_keys="[Scholarship.submitted_by_id]",
+    )
     saved_scholarships: Mapped[list["SavedScholarship"]] = relationship(
         "SavedScholarship",
         back_populates="user",

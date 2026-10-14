@@ -1,13 +1,21 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import {
   NotificationItem,
   NotificationFilterTab,
 } from '../../types/notification';
+import {
+  notificationService,
+  ListNotificationsParams,
+} from '../../services/notificationService';
+import { mapBackendNotificationToFrontend } from '../../utils/adapters';
 
 export interface NotificationState {
   items: NotificationItem[];
   unreadCount: number;
   filterTab: NotificationFilterTab;
+  isLoading: boolean;
+  error: string | null;
+  total: number;
 }
 
 // Generate relative mock dates
@@ -17,7 +25,7 @@ const hoursAgo = (hours: number) =>
 const daysAgo = (days: number) =>
   new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 
-export const initialNotifications: NotificationItem[] = [
+export const initialDefaultNotifications: NotificationItem[] = [
   // 1. Deadline Reminder (Today)
   {
     id: 'notif_deadline_01',
@@ -91,20 +99,103 @@ export const initialNotifications: NotificationItem[] = [
   },
 ];
 
+export const initialNotifications = initialDefaultNotifications;
+
 const countUnread = (items: NotificationItem[]): number => {
   return items.filter((n) => !n.isRead).length;
 };
 
 const initialState: NotificationState = {
-  items: initialNotifications,
-  unreadCount: countUnread(initialNotifications),
+  items: initialDefaultNotifications,
+  unreadCount: countUnread(initialDefaultNotifications),
   filterTab: 'all',
+  isLoading: false,
+  error: null,
+  total: initialDefaultNotifications.length,
 };
+
+// ==============================================================================
+// ASYNC THUNKS
+// ==============================================================================
+
+export const fetchNotificationsThunk = createAsyncThunk(
+  'notifications/fetchNotifications',
+  async (params: ListNotificationsParams | undefined, { rejectWithValue }) => {
+    try {
+      const response = await notificationService.listNotifications(params);
+      const items = (response.data.items || []).map((n) =>
+        mapBackendNotificationToFrontend(n)
+      );
+      return {
+        items,
+        total: response.data.total,
+        unreadCount: response.data.unread_count,
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch notifications');
+    }
+  }
+);
+
+export const fetchUnreadCountThunk = createAsyncThunk(
+  'notifications/fetchUnreadCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await notificationService.getUnreadCount();
+      return response.data.unread_count;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch unread count');
+    }
+  }
+);
+
+export const markNotificationReadThunk = createAsyncThunk(
+  'notifications/markNotificationRead',
+  async (notificationId: string, { rejectWithValue }) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      return notificationId;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to mark notification as read');
+    }
+  }
+);
+
+export const markAllNotificationsReadThunk = createAsyncThunk(
+  'notifications/markAllNotificationsRead',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await notificationService.markAllAsRead();
+      return response.data.updated_count;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to mark all as read');
+    }
+  }
+);
+
+export const deleteNotificationThunk = createAsyncThunk(
+  'notifications/deleteNotification',
+  async (notificationId: string, { rejectWithValue }) => {
+    try {
+      await notificationService.deleteNotification(notificationId);
+      return notificationId;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to delete notification');
+    }
+  }
+);
 
 export const notificationSlice = createSlice({
   name: 'notifications',
   initialState,
   reducers: {
+    setNotifications: (state, action: PayloadAction<NotificationItem[]>) => {
+      state.items = action.payload;
+      state.unreadCount = countUnread(action.payload);
+      state.total = action.payload.length;
+      state.isLoading = false;
+      state.error = null;
+    },
     markNotificationRead: (state, action: PayloadAction<string>) => {
       const id = action.payload;
       const notif = state.items.find((item) => item.id === id);
@@ -128,20 +219,72 @@ export const notificationSlice = createSlice({
     addNotification: (state, action: PayloadAction<NotificationItem>) => {
       state.items.unshift(action.payload);
       state.unreadCount = countUnread(state.items);
+      state.total += 1;
     },
     deleteNotification: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
       state.unreadCount = countUnread(state.items);
+      state.total = state.items.length;
     },
     resetNotifications: (state) => {
-      state.items = initialNotifications;
-      state.unreadCount = countUnread(initialNotifications);
+      state.items = initialDefaultNotifications;
+      state.unreadCount = countUnread(initialDefaultNotifications);
       state.filterTab = 'all';
+      state.total = initialDefaultNotifications.length;
     },
+  },
+  extraReducers: (builder) => {
+    // List
+    builder
+      .addCase(fetchNotificationsThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchNotificationsThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload.items;
+        state.total = action.payload.total;
+        state.unreadCount = action.payload.unreadCount;
+        state.error = null;
+      })
+      .addCase(fetchNotificationsThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Unread count
+    builder.addCase(fetchUnreadCountThunk.fulfilled, (state, action) => {
+      state.unreadCount = action.payload;
+    });
+
+    // Mark single read
+    builder.addCase(markNotificationReadThunk.fulfilled, (state, action) => {
+      const notif = state.items.find((item) => item.id === action.payload);
+      if (notif && !notif.isRead) {
+        notif.isRead = true;
+        state.unreadCount = countUnread(state.items);
+      }
+    });
+
+    // Mark all read
+    builder.addCase(markAllNotificationsReadThunk.fulfilled, (state) => {
+      state.items.forEach((item) => {
+        item.isRead = true;
+      });
+      state.unreadCount = 0;
+    });
+
+    // Delete
+    builder.addCase(deleteNotificationThunk.fulfilled, (state, action) => {
+      state.items = state.items.filter((item) => item.id !== action.payload);
+      state.unreadCount = countUnread(state.items);
+      state.total = state.items.length;
+    });
   },
 });
 
 export const {
+  setNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   setNotificationFilterTab,

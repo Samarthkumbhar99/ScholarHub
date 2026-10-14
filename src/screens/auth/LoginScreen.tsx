@@ -4,11 +4,10 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList, RootStackParamList } from '../../types/navigation';
 import { useAppDispatch } from '../../hooks';
-import { setCredentials, initialMockProfile } from '../../store/slices/authSlice';
+import { loginUserThunk, setCredentials, initialDefaultProfile } from '../../store/slices/authSlice';
 import {
   ScreenContainer,
   Card,
-  Badge,
   Divider,
 } from '../../components/common';
 import {
@@ -56,7 +55,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   // Handle standard user login
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     const newErrors: { email?: string; mobile?: string; password?: string } = {};
 
     if (loginMode === 'email') {
@@ -88,49 +87,153 @@ export const LoginScreen: React.FC = () => {
     setIsLoading(true);
     setInfoBanner(null);
 
-    // Mock authentication process
-    setTimeout(() => {
-      setIsLoading(false);
-      const userEmail = loginMode === 'email' ? email.trim() : `${mobile.trim()}@mobile.scholarhub.edu`;
-      dispatch(
-        setCredentials({
-          token: 'jwt-mock-session-token',
-          user: {
-            ...initialMockProfile,
-            id: 'usr_student_01',
-            email: userEmail,
-          },
+    const targetEmail = loginMode === 'email' ? email.trim().toLowerCase() : `${mobile.trim()}@mobile.scholarhub.edu`;
+
+    try {
+      const res = await dispatch(
+        loginUserThunk({
+          email: targetEmail,
+          password,
         })
-      );
+      ).unwrap();
+
+      setIsLoading(false);
       if (parentNavigation) {
-        parentNavigation.replace('Student');
+        const role = (res.user?.role || 'student').toLowerCase();
+        if (role === 'admin') {
+          parentNavigation.replace('AdminDashboard');
+        } else if (role === 'provider') {
+          parentNavigation.replace('ProviderDashboard');
+        } else {
+          parentNavigation.replace('Student');
+        }
       }
-    }, 800);
+    } catch (err: any) {
+      setIsLoading(false);
+      const errorMsg = typeof err === 'string' ? err : err?.message || 'Login failed. Please check your credentials.';
+      setErrors({ general: errorMsg });
+      setInfoBanner(errorMsg);
+    }
   };
 
-  // 1-Click Demo Login handler
-  const handleDemoLogin = () => {
+  // 1-Click Demo Student Login handler
+  const handleDemoLogin = async () => {
     setIsLoading(true);
     setErrors({});
     setInfoBanner(null);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      dispatch(
-        setCredentials({
-          token: 'jwt-demo-student-token',
-          user: initialMockProfile,
+    try {
+      const res = await dispatch(
+        loginUserThunk({
+          email: 'rahul.sharma@university.edu',
+          password: 'Password123!',
         })
-      );
+      ).unwrap();
+
+      setIsLoading(false);
       if (parentNavigation) {
         parentNavigation.replace('Student');
       }
-    }, 500);
+    } catch {
+      dispatch(
+        setCredentials({
+          token: 'jwt-demo-student-session-token',
+          user: { ...initialDefaultProfile, role: 'student' },
+        })
+      );
+      setIsLoading(false);
+      if (parentNavigation) {
+        parentNavigation.replace('Student');
+      }
+    }
+  };
+
+  // 1-Click Demo Provider Login handler
+  const handleDemoProviderLogin = async () => {
+    setIsLoading(true);
+    setErrors({});
+    setInfoBanner(null);
+
+    try {
+      const res = await dispatch(
+        loginUserThunk({
+          email: 'tata.trusts@foundation.org',
+          password: 'Password123!',
+        })
+      ).unwrap();
+
+      setIsLoading(false);
+      if (parentNavigation) {
+        parentNavigation.replace('ProviderDashboard');
+      }
+    } catch {
+      dispatch(
+        setCredentials({
+          token: 'jwt-demo-provider-session-token',
+          user: {
+            ...initialDefaultProfile,
+            id: 'usr_provider_demo_01',
+            email: 'tata.trusts@foundation.org',
+            name: 'Tata Trusts Foundation',
+            role: 'provider',
+            providerProfile: {
+              id: 'prof_provider_01',
+              organizationName: 'Tata Trusts Foundation',
+              contactPerson: 'Aditi Deshmukh',
+              website: 'https://tatatrusts.org',
+              isApproved: true,
+            },
+          },
+        })
+      );
+      setIsLoading(false);
+      if (parentNavigation) {
+        parentNavigation.replace('ProviderDashboard');
+      }
+    }
+  };
+
+  // 1-Click Demo Admin Login handler
+  const handleDemoAdminLogin = async () => {
+    setIsLoading(true);
+    setErrors({});
+    setInfoBanner(null);
+
+    try {
+      const res = await dispatch(
+        loginUserThunk({
+          email: 'admin@scholarhub.edu',
+          password: 'Password123!',
+        })
+      ).unwrap();
+
+      setIsLoading(false);
+      if (parentNavigation) {
+        parentNavigation.replace('AdminDashboard');
+      }
+    } catch {
+      dispatch(
+        setCredentials({
+          token: 'jwt-demo-admin-session-token',
+          user: {
+            ...initialDefaultProfile,
+            id: 'usr_admin_demo_01',
+            email: 'admin@scholarhub.edu',
+            name: 'System Administrator',
+            role: 'admin',
+          },
+        })
+      );
+      setIsLoading(false);
+      if (parentNavigation) {
+        parentNavigation.replace('AdminDashboard');
+      }
+    }
   };
 
   // Google OAuth placeholder handler
   const handleGoogleSignIn = () => {
-    setInfoBanner('Google Sign-In integration point ready (Frontend Prototype).');
+    setInfoBanner('Google Sign-In integration point ready.');
   };
 
   // Forgot Password handler
@@ -158,14 +261,14 @@ export const LoginScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Informational Message Banner (e.g. Forgot Password / Google feedback) */}
+        {/* Informational Message Banner / Error Display */}
         {Boolean(infoBanner) ? (
-          <View className="mb-4 p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex-row items-center justify-between">
-            <Text className="text-xs font-semibold text-primary-800 flex-1 mr-2">
+          <View className="mb-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex-row items-center justify-between">
+            <Text className="text-xs font-semibold text-amber-900 flex-1 mr-2">
               ℹ️ {infoBanner}
             </Text>
             <TouchableOpacity onPress={() => setInfoBanner(null)}>
-              <Text className="text-xs font-bold text-primary-600">✕</Text>
+              <Text className="text-xs font-bold text-amber-700">✕</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -298,15 +401,31 @@ export const LoginScreen: React.FC = () => {
             textClassName="text-slate-700 font-bold text-xs"
           />
 
-          {/* 1-Click Demo / Development Login */}
-          <SecondaryButton
-            title="⚡ 1-Click Demo Student Login"
-            fullWidth
-            onPress={handleDemoLogin}
-            textClassName="text-xs font-bold"
-          />
-          <Text className="text-[10px] text-slate-400 text-center mt-1.5 font-medium">
-            Demo / Development Login
+          {/* 1-Click Demo / Development Logins */}
+          <View className="gap-2">
+            <SecondaryButton
+              title="🎓 1-Click Demo Student Login"
+              fullWidth
+              onPress={handleDemoLogin}
+              textClassName="text-xs font-bold"
+            />
+            <OutlineButton
+              title="🏢 1-Click Demo Provider Login"
+              fullWidth
+              onPress={handleDemoProviderLogin}
+              className="border-amber-400 bg-amber-50/50"
+              textClassName="text-xs font-bold text-amber-900"
+            />
+            <OutlineButton
+              title="🛡️ 1-Click Demo Admin Login"
+              fullWidth
+              onPress={handleDemoAdminLogin}
+              className="border-indigo-300 bg-indigo-50/70 active:bg-indigo-100"
+              textClassName="text-xs font-bold text-indigo-900"
+            />
+          </View>
+          <Text className="text-[10px] text-slate-400 text-center mt-2 font-medium">
+            Role-Based Development Shortcuts (Pre-configured)
           </Text>
         </Card>
 

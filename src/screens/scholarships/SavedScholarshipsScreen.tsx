@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
-  removeSavedScholarship,
+  toggleSaveScholarshipThunk,
   toggleCompareScholarship,
+  fetchSavedScholarshipsThunk,
 } from '../../store/slices/scholarshipSlice';
 import {
   ScreenContainer,
@@ -31,17 +32,22 @@ export const SavedScholarshipsScreen: React.FC = () => {
   const navigation = useNavigation<SavedNavProp>();
   const dispatch = useAppDispatch();
 
-  const { savedScholarshipIds, comparedScholarshipIds } = useAppSelector(
+  const { savedScholarshipIds, comparedScholarshipIds, items: reduxScholarships } = useAppSelector(
     (state) => state.scholarships
   );
 
-  // Filter mock scholarships to only those that are in savedScholarshipIds
-  const savedScholarships = MOCK_SCHOLARSHIPS.filter((item) =>
-    savedScholarshipIds.includes(item.id)
-  );
+  useEffect(() => {
+    dispatch(fetchSavedScholarshipsThunk());
+  }, [dispatch]);
+
+  // Combine backend list or match with existing scholarships
+  const savedScholarships: ScholarshipItem[] = useMemo(() => {
+    const source = reduxScholarships && reduxScholarships.length > 0 ? reduxScholarships : MOCK_SCHOLARSHIPS;
+    return source.filter((item) => savedScholarshipIds.includes(item.id));
+  }, [reduxScholarships, savedScholarshipIds]);
 
   const handleRemove = (id: string, title: string) => {
-    dispatch(removeSavedScholarship(id));
+    dispatch(toggleSaveScholarshipThunk(id));
   };
 
   const handleDetails = (scholarship: ScholarshipItem) => {

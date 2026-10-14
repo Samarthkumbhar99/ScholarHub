@@ -5,13 +5,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { colors } from '../../theme';
 import { APP_CONFIG } from '../../constants';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { restoreSessionThunk } from '../../store/slices/authSlice';
 
 type SplashNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
 /**
  * ScholarHubLogo
- * Modular placeholder for ScholarHub branding logo.
- * Easily swappable with an <Image source={require('...')} /> when official asset is ready.
+ * Branding logo for splash presentation.
  */
 const ScholarHubLogo: React.FC = () => {
   return (
@@ -23,22 +24,53 @@ const ScholarHubLogo: React.FC = () => {
 
 /**
  * SplashScreen
- * Application entry screen with 2.5s delay before routing to Login
+ * Application bootstrap entry verifying authenticated session before routing
  */
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<SplashNavigationProp>();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    // 2.5 second delay before navigating to the Login screen
-    const timer = setTimeout(() => {
-      navigation.replace('Auth');
-    }, 2500);
+    let isMounted = true;
 
-    // Clean up timer on unmount to prevent memory leaks
-    return () => {
-      clearTimeout(timer);
+    const bootstrapApp = async () => {
+      // Minimum splash visual delay for smooth transition
+      const timerPromise = new Promise((resolve) => setTimeout(resolve, 1500));
+
+      let restoredUser = user;
+      // Attempt to restore authenticated session
+      try {
+        const res = await dispatch(restoreSessionThunk()).unwrap();
+        restoredUser = res.user;
+      } catch {
+        // No active or valid session
+      }
+
+      await timerPromise;
+
+      if (isMounted) {
+        if (restoredUser || isAuthenticated) {
+          const role = (restoredUser?.role || user?.role || 'student').toLowerCase();
+          if (role === 'admin') {
+            navigation.replace('AdminDashboard');
+          } else if (role === 'provider') {
+            navigation.replace('ProviderDashboard');
+          } else {
+            navigation.replace('Student');
+          }
+        } else {
+          navigation.replace('Auth');
+        }
+      }
     };
-  }, [navigation]);
+
+    bootstrapApp();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigation, dispatch, isAuthenticated]);
 
   return (
     <View className="flex-1 bg-white items-center justify-center p-6">

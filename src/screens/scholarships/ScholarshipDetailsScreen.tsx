@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
-  toggleSaveScholarship,
+  toggleSaveScholarshipThunk,
   toggleCompareScholarship,
+  fetchScholarshipDetailsThunk,
+  fetchMatchResultThunk,
 } from '../../store/slices/scholarshipSlice';
-import { createOrGetApplication } from '../../store/slices/applicationSlice';
+import { createApplicationThunk } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
   Header,
@@ -46,7 +48,7 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   const navigation = useNavigation<DetailsNavProp>();
   const dispatch = useAppDispatch();
 
-  const { savedScholarshipIds, comparedScholarshipIds } = useAppSelector(
+  const { savedScholarshipIds, comparedScholarshipIds, items: reduxScholarships, selectedScholarship, matchResults } = useAppSelector(
     (state) => state.scholarships
   );
   const { items: applicationItems } = useAppSelector((state) => state.applications);
@@ -54,7 +56,20 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   const [compareFeedback, setCompareFeedback] = useState<string | null>(null);
 
   const scholarshipId = route.params?.scholarshipId;
-  const scholarship = MOCK_SCHOLARSHIPS.find((item) => item.id === scholarshipId);
+
+  // Sync details and AI match score on mount
+  useEffect(() => {
+    if (scholarshipId) {
+      dispatch(fetchScholarshipDetailsThunk(scholarshipId));
+      dispatch(fetchMatchResultThunk(scholarshipId));
+    }
+  }, [dispatch, scholarshipId]);
+
+  // Find scholarship from backend or fallback to mock
+  const scholarship =
+    (selectedScholarship && selectedScholarship.id === scholarshipId ? selectedScholarship : null) ||
+    reduxScholarships.find((item) => item.id === scholarshipId) ||
+    MOCK_SCHOLARSHIPS.find((item) => item.id === scholarshipId);
 
   // If scholarship not found, display graceful error state
   if (!scholarship) {
@@ -78,10 +93,11 @@ export const ScholarshipDetailsScreen: React.FC = () => {
   const isSaved = savedScholarshipIds.includes(scholarship.id);
   const isCompared = comparedScholarshipIds.includes(scholarship.id);
   const isUrgent = scholarship.daysLeft <= 7;
+  const matchResult = scholarshipId ? matchResults[scholarshipId] : null;
 
   // Handlers
   const handleToggleSave = () => {
-    dispatch(toggleSaveScholarship(scholarship.id));
+    dispatch(toggleSaveScholarshipThunk(scholarship.id));
   };
 
   const handleToggleCompare = () => {
@@ -108,30 +124,34 @@ export const ScholarshipDetailsScreen: React.FC = () => {
     setTimeout(() => setCompareFeedback(null), 3000);
   };
 
-  const handleApplyNow = () => {
+  const handleApplyNow = async () => {
     const existingApp = applicationItems.find((app) => app.scholarshipId === scholarship.id);
-    const targetApplicationId = existingApp
-      ? existingApp.id
-      : scholarship.id.startsWith('sch_')
-      ? `app_${scholarship.id.slice(4)}`
-      : `app_${scholarship.id}`;
+    if (existingApp) {
+      navigation.navigate('ApplicationDetails', {
+        applicationId: existingApp.id,
+      });
+      return;
+    }
 
-    dispatch(
-      createOrGetApplication({
-        id: targetApplicationId,
-        scholarshipId: scholarship.id,
-        scholarshipTitle: scholarship.title,
-        provider: scholarship.provider,
-        awardAmount: scholarship.awardAmount,
-        deadline: scholarship.deadline,
-        matchScore: scholarship.matchScore,
-        requiredDocuments: scholarship.requiredDocuments,
-      })
-    );
+    try {
+      const createdApp = await dispatch(
+        createApplicationThunk({
+          scholarship_id: scholarship.id,
+          status: 'SAVED',
+        })
+      ).unwrap();
 
-    navigation.navigate('ApplicationDetails', {
-      applicationId: targetApplicationId,
-    });
+      navigation.navigate('ApplicationDetails', {
+        applicationId: createdApp.id,
+      });
+    } catch {
+      const fallbackAppId = scholarship.id.startsWith('sch_')
+        ? `app_${scholarship.id.slice(4)}`
+        : `app_${scholarship.id}`;
+      navigation.navigate('ApplicationDetails', {
+        applicationId: fallbackAppId,
+      });
+    }
   };
 
   const handleOpenOfficialWebsite = async () => {
@@ -229,6 +249,70 @@ export const ScholarshipDetailsScreen: React.FC = () => {
             ))}
           </View>
         </Card>
+
+        {/* AI Profile Match Breakdown Card */}
+        {matchResult && (
+          <Card variant="elevated" className="p-5 mb-4 border border-purple-200 bg-purple-50/20">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-2">
+                <Text className="text-base">✨</Text>
+                <Text className="text-sm font-extrabold text-slate-900">
+                  AI Eligibility Assessment
+                </Text>
+              </View>
+              <Badge
+                variant={matchResult.match_score >= 80 ? 'success' : matchResult.match_score >= 60 ? 'info' : 'warning'}
+                size="sm"
+                label={`${matchResult.match_score}% Match (${matchResult.match_level})`}
+              />
+            </View>
+
+            {matchResult.summary ? (
+              <Text className="text-xs text-slate-700 leading-relaxed mb-3">
+                {matchResult.summary}
+              </Text>
+            ) : null}
+
+            {matchResult.matched_criteria && matchResult.matched_criteria.length > 0 && (
+              <View className="mb-2.5">
+                <Text className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1">
+                  ✓ Matching Criteria
+                </Text>
+                {matchResult.matched_criteria.map((c, i) => (
+                  <Text key={i} className="text-xs text-slate-600 ml-2 mb-0.5">
+                    • {typeof c === 'string' ? c : `${c.criteria}${c.explanation ? ` — ${c.explanation}` : ''}`}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {matchResult.potential_issues && matchResult.potential_issues.length > 0 && (
+              <View className="mb-2.5">
+                <Text className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-1">
+                  ⚠️ Potential Considerations
+                </Text>
+                {matchResult.potential_issues.map((issue, i) => (
+                  <Text key={i} className="text-xs text-slate-600 ml-2 mb-0.5">
+                    • {issue}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {matchResult.recommendations && matchResult.recommendations.length > 0 && (
+              <View>
+                <Text className="text-[11px] font-bold text-primary-800 uppercase tracking-wider mb-1">
+                  💡 Recommendations
+                </Text>
+                {matchResult.recommendations.map((rec, i) => (
+                  <Text key={i} className="text-xs text-slate-600 ml-2 mb-0.5">
+                    • {rec}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </Card>
+        )}
 
         {/* 3. Award Value & Deadline Card */}
         <Card variant="elevated" className="p-5 mb-4 bg-emerald-900 border-transparent shadow-md shadow-emerald-900/20">

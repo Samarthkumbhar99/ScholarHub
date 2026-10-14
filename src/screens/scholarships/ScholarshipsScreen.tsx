@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
-  toggleSaveScholarship,
+  toggleSaveScholarshipThunk,
   toggleCompareScholarship,
+  fetchScholarshipsThunk,
+  fetchSavedScholarshipsThunk,
 } from '../../store/slices/scholarshipSlice';
-import { createOrGetApplication } from '../../store/slices/applicationSlice';
+import { createApplicationThunk } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
   Header,
@@ -38,10 +40,21 @@ type ScholarshipsNavProp = StudentTabScreenNavigationProp<'Scholarships'>;
 export const ScholarshipsScreen: React.FC = () => {
   const navigation = useNavigation<ScholarshipsNavProp>();
   const dispatch = useAppDispatch();
-  const { savedScholarshipIds, comparedScholarshipIds } = useAppSelector(
+  const { savedScholarshipIds, comparedScholarshipIds, items: reduxScholarships, isLoading, error } = useAppSelector(
     (state) => state.scholarships
   );
   const { items: applicationItems } = useAppSelector((state) => state.applications);
+
+  // Sync scholarships and saved on mount
+  useEffect(() => {
+    dispatch(fetchScholarshipsThunk());
+    dispatch(fetchSavedScholarshipsThunk());
+  }, [dispatch]);
+
+  // Source list of scholarships: backend data
+  const sourceScholarships = useMemo(() => {
+    return reduxScholarships || [];
+  }, [reduxScholarships]);
 
   // Filter & Search State
   const [filterState, setFilterState] = useState<ScholarshipFilterState>(initialFilterState);
@@ -76,8 +89,8 @@ export const ScholarshipsScreen: React.FC = () => {
 
   // Filter & Sort computation
   const filteredScholarships = useMemo(() => {
-    return filterScholarships(MOCK_SCHOLARSHIPS, filterState);
-  }, [filterState]);
+    return filterScholarships(sourceScholarships, filterState);
+  }, [sourceScholarships, filterState]);
 
   const activeFilterCount = useMemo(() => {
     return countActiveFilters(filterState);
@@ -85,7 +98,7 @@ export const ScholarshipsScreen: React.FC = () => {
 
   // Actions
   const handleToggleSave = (id: string) => {
-    dispatch(toggleSaveScholarship(id));
+    dispatch(toggleSaveScholarshipThunk(id));
   };
 
   const handleToggleCompare = (id: string) => {
@@ -99,30 +112,34 @@ export const ScholarshipsScreen: React.FC = () => {
     dispatch(toggleCompareScholarship(id));
   };
 
-  const handleApply = (scholarship: ScholarshipItem) => {
+  const handleApply = async (scholarship: ScholarshipItem) => {
     const existingApp = applicationItems.find((app) => app.scholarshipId === scholarship.id);
-    const targetApplicationId = existingApp
-      ? existingApp.id
-      : scholarship.id.startsWith('sch_')
-      ? `app_${scholarship.id.slice(4)}`
-      : `app_${scholarship.id}`;
+    if (existingApp) {
+      navigation.navigate('ApplicationDetails', {
+        applicationId: existingApp.id,
+      });
+      return;
+    }
 
-    dispatch(
-      createOrGetApplication({
-        id: targetApplicationId,
-        scholarshipId: scholarship.id,
-        scholarshipTitle: scholarship.title,
-        provider: scholarship.provider,
-        awardAmount: scholarship.awardAmount,
-        deadline: scholarship.deadline,
-        matchScore: scholarship.matchScore,
-        requiredDocuments: scholarship.requiredDocuments,
-      })
-    );
+    try {
+      const createdApp = await dispatch(
+        createApplicationThunk({
+          scholarship_id: scholarship.id,
+          status: 'SAVED',
+        })
+      ).unwrap();
 
-    navigation.navigate('ApplicationDetails', {
-      applicationId: targetApplicationId,
-    });
+      navigation.navigate('ApplicationDetails', {
+        applicationId: createdApp.id,
+      });
+    } catch {
+      const fallbackAppId = scholarship.id.startsWith('sch_')
+        ? `app_${scholarship.id.slice(4)}`
+        : `app_${scholarship.id}`;
+      navigation.navigate('ApplicationDetails', {
+        applicationId: fallbackAppId,
+      });
+    }
   };
 
   const handleDetails = (scholarship: ScholarshipItem) => {
@@ -155,7 +172,7 @@ export const ScholarshipsScreen: React.FC = () => {
         {/* Header */}
         <Header
           title="Scholarship Directory"
-          subtitle={`${filteredScholarships.length} of ${MOCK_SCHOLARSHIPS.length} matching opportunities`}
+          subtitle={`${filteredScholarships.length} available opportunities`}
           rightAction={
             <Badge
               variant="primary"
@@ -251,13 +268,24 @@ export const ScholarshipsScreen: React.FC = () => {
           onSelectSort={handleSortChange}
         />
 
-        {/* Scholarships List */}
-        {filteredScholarships.length === 0 ? (
+        {/* Scholarships List / Loading / Error / Empty States */}
+        {error && sourceScholarships.length === 0 ? (
           <EmptyState
-            title="No Scholarships Found"
-            description="No scholarships matched your current search query and smart filters. Try loosening your criteria."
-            actionTitle="Clear All Filters"
-            onActionPress={handleClearAllFilters}
+            title="Unable to Load Scholarships"
+            description={error || "Failed to retrieve scholarship opportunities from the server. Please check your network connection and retry."}
+            actionTitle="↻ Retry Loading"
+            onActionPress={() => dispatch(fetchScholarshipsThunk())}
+          />
+        ) : filteredScholarships.length === 0 ? (
+          <EmptyState
+            title={isLoading ? "Loading Scholarships..." : "No Scholarships Found"}
+            description={
+              isLoading
+                ? "Fetching available scholarship grants from the server..."
+                : "No scholarships matched your current search query and smart filters. Try loosening your criteria."
+            }
+            actionTitle={isLoading ? undefined : "Clear All Filters"}
+            onActionPress={isLoading ? undefined : handleClearAllFilters}
           />
         ) : (
           <View className="pb-6">

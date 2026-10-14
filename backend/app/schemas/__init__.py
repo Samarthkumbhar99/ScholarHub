@@ -45,6 +45,26 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentTypeEnum,
 )
+from app.schemas.notification import (
+    MarkAllReadResponse,
+    NotificationCreateRequest,
+    NotificationDeleteResponse,
+    NotificationListResponse,
+    NotificationResponse,
+    UnreadCountResponse,
+)
+
+from app.schemas.admin import (
+    AdminActionResponse,
+    AdminDashboardStatsResponse,
+    AdminRequirementCreate,
+    AdminRequirementUpdate,
+    AdminScholarshipCreate,
+    AdminScholarshipUpdate,
+    AdminUserDetailResponse,
+    AdminUserListItem,
+    AdminUserListResponse,
+)
 
 __all__ = [
     # Auth
@@ -87,4 +107,22 @@ __all__ = [
     "DocumentResponse",
     "DocumentListResponse",
     "DocumentDeleteResponse",
+    # Notification
+    "NotificationResponse",
+    "NotificationListResponse",
+    "UnreadCountResponse",
+    "MarkAllReadResponse",
+    "NotificationDeleteResponse",
+    "NotificationCreateRequest",
+    # Admin
+    "AdminScholarshipCreate",
+    "AdminScholarshipUpdate",
+    "AdminRequirementCreate",
+    "AdminRequirementUpdate",
+    "AdminUserListItem",
+    "AdminUserListResponse",
+    "AdminUserDetailResponse",
+    "AdminDashboardStatsResponse",
+    "AdminActionResponse",
 ]
+

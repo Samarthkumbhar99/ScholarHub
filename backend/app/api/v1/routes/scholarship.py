@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.dependencies import get_current_user
 from app.core.database import get_db
@@ -96,7 +97,7 @@ async def list_scholarships(
     db: AsyncSession = Depends(get_db),
 ) -> ScholarshipListResponse:
     """Retrieve paginated and filtered scholarships with deterministic sorting."""
-    stmt = select(Scholarship)
+    stmt = select(Scholarship).where(Scholarship.is_published_condition())
 
     # 1. Text Search across relevant textual columns
     if q and q.strip():
@@ -176,7 +177,10 @@ async def get_saved_scholarships(
     stmt = (
         select(Scholarship)
         .join(SavedScholarship, SavedScholarship.scholarship_id == Scholarship.id)
-        .where(SavedScholarship.user_id == current_user.id)
+        .where(
+            SavedScholarship.user_id == current_user.id,
+            Scholarship.is_published_condition(),
+        )
     )
 
     # Count total saved items
@@ -258,7 +262,10 @@ async def compare_scholarships(
             detail="You can compare up to 3 scholarships at a time",
         )
 
-    stmt = select(Scholarship).where(Scholarship.id.in_(unique_uuids))
+    stmt = select(Scholarship).where(
+        Scholarship.id.in_(unique_uuids),
+        Scholarship.is_published_condition(),
+    )
     res = await db.execute(stmt)
     scholarships = res.scalars().all()
 
@@ -318,7 +325,12 @@ async def get_scholarship_recommendations(
     preferences = fin_res.scalar_one_or_none()
 
     # 2. Query available scholarships (bounded limit for efficient evaluation)
-    sch_stmt = select(Scholarship).order_by(Scholarship.deadline.asc()).limit(100)
+    sch_stmt = (
+        select(Scholarship)
+        .where(Scholarship.is_published_condition())
+        .order_by(Scholarship.deadline.asc())
+        .limit(100)
+    )
     sch_res = await db.execute(sch_stmt)
     scholarships = list(sch_res.scalars().all())
 
@@ -376,7 +388,14 @@ async def get_scholarship_details(
     db: AsyncSession = Depends(get_db),
 ) -> ScholarshipResponse:
     """Retrieve full details of a specific scholarship."""
-    stmt = select(Scholarship).where(Scholarship.id == scholarship_id)
+    stmt = (
+        select(Scholarship)
+        .options(selectinload(Scholarship.source))
+        .where(
+            Scholarship.id == scholarship_id,
+            Scholarship.is_published_condition(),
+        )
+    )
     result = await db.execute(stmt)
     scholarship = result.scalar_one_or_none()
 
@@ -410,7 +429,10 @@ async def get_scholarship_requirements(
     db: AsyncSession = Depends(get_db),
 ) -> list[ScholarshipRequirementResponse]:
     """Retrieve all document and eligibility requirements for a given scholarship."""
-    sch_stmt = select(Scholarship.id).where(Scholarship.id == scholarship_id)
+    sch_stmt = select(Scholarship.id).where(
+        Scholarship.id == scholarship_id,
+        Scholarship.is_published_condition(),
+    )
     sch_result = await db.execute(sch_stmt)
     if sch_result.scalar_one_or_none() is None:
         raise HTTPException(
@@ -451,7 +473,10 @@ async def match_scholarship(
 ) -> ScholarshipMatchResponse:
     """Evaluate compatibility between the authenticated student's profile and a specific scholarship."""
     # 1. Fetch scholarship
-    sch_stmt = select(Scholarship).where(Scholarship.id == scholarship_id)
+    sch_stmt = select(Scholarship).where(
+        Scholarship.id == scholarship_id,
+        Scholarship.is_published_condition(),
+    )
     sch_res = await db.execute(sch_stmt)
     scholarship = sch_res.scalar_one_or_none()
 
@@ -514,7 +539,10 @@ async def save_scholarship(
 ) -> SavedStatusResponse:
     """Bookmark a scholarship for the current user (idempotent)."""
     # 1. Verify scholarship exists
-    sch_stmt = select(Scholarship.id).where(Scholarship.id == scholarship_id)
+    sch_stmt = select(Scholarship.id).where(
+        Scholarship.id == scholarship_id,
+        Scholarship.is_published_condition(),
+    )
     sch_result = await db.execute(sch_stmt)
     if sch_result.scalar_one_or_none() is None:
         raise HTTPException(
@@ -615,7 +643,10 @@ async def check_saved_status(
 ) -> SavedStatusResponse:
     """Return whether the current authenticated student has bookmarked the scholarship."""
     # 1. Verify scholarship exists
-    sch_stmt = select(Scholarship.id).where(Scholarship.id == scholarship_id)
+    sch_stmt = select(Scholarship.id).where(
+        Scholarship.id == scholarship_id,
+        Scholarship.is_published_condition(),
+    )
     sch_result = await db.execute(sch_stmt)
     if sch_result.scalar_one_or_none() is None:
         raise HTTPException(

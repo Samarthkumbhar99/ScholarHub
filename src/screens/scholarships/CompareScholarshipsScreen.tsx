@@ -37,14 +37,15 @@ export const CompareScholarshipsScreen: React.FC = () => {
   const navigation = useNavigation<CompareNavProp>();
   const dispatch = useAppDispatch();
 
-  const { comparedScholarshipIds } = useAppSelector((state) => state.scholarships);
+  const { comparedScholarshipIds, items: reduxScholarships } = useAppSelector((state) => state.scholarships);
 
   // Retrieve full scholarship objects for compared IDs
   const comparedScholarships = useMemo(() => {
+    const source = reduxScholarships && reduxScholarships.length > 0 ? reduxScholarships : MOCK_SCHOLARSHIPS;
     return comparedScholarshipIds
-      .map((id) => MOCK_SCHOLARSHIPS.find((item) => item.id === id))
+      .map((id) => source.find((item) => item.id === id))
       .filter((item): item is ScholarshipItem => item !== undefined);
-  }, [comparedScholarshipIds]);
+  }, [comparedScholarshipIds, reduxScholarships]);
 
   // Compute best values among compared items for clean highlighting
   const bestMetrics = useMemo(() => {

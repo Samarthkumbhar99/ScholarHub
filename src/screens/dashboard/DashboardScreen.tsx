@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
-import { useAppSelector } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import { ScreenContainer, Card } from '../../components/common';
+import {
+  fetchScholarshipsThunk,
+  fetchSavedScholarshipsThunk,
+  fetchRecommendationsThunk,
+} from '../../store/slices/scholarshipSlice';
+import { fetchApplicationsThunk } from '../../store/slices/applicationSlice';
+import { fetchUnreadCountThunk } from '../../store/slices/notificationSlice';
 
 import { DashboardStats } from './types';
 import { MOCK_DASHBOARD_DATA } from './data/mockDashboardData';
@@ -22,9 +29,19 @@ type DashboardNavProp = StudentTabScreenNavigationProp<'Dashboard'>;
  */
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<DashboardNavProp>();
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { savedScholarshipIds } = useAppSelector((state) => state.scholarships);
+  const { savedScholarshipIds, items: scholarshipItems } = useAppSelector((state) => state.scholarships);
   const { items: applicationItems } = useAppSelector((state) => state.applications);
+
+  // Sync dashboard data on mount
+  useEffect(() => {
+    dispatch(fetchScholarshipsThunk());
+    dispatch(fetchSavedScholarshipsThunk());
+    dispatch(fetchApplicationsThunk());
+    dispatch(fetchUnreadCountThunk());
+    dispatch(fetchRecommendationsThunk());
+  }, [dispatch]);
 
   // Student greeting name from Redux or mock fallback
   const studentDisplayName = user?.firstName
@@ -34,6 +51,7 @@ export const DashboardScreen: React.FC = () => {
   // Dynamic statistics reflecting live Redux saved & application state
   const dynamicStats: DashboardStats = {
     ...MOCK_DASHBOARD_DATA.stats,
+    eligible: scholarshipItems.length > 0 ? scholarshipItems.length : MOCK_DASHBOARD_DATA.stats.eligible,
     saved: savedScholarshipIds.length,
     applied: applicationItems.length,
   };

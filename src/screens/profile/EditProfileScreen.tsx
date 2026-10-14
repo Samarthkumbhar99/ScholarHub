@@ -14,6 +14,9 @@ import {
   updatePersonalDetails,
   updateAcademicDetails,
   updatePreferencesDetails,
+  updatePersonalProfileThunk,
+  updateAcademicProfileThunk,
+  updatePreferencesProfileThunk,
 } from '../../store/slices/authSlice';
 import {
   PersonalDetails,
@@ -118,14 +121,18 @@ export const EditProfileScreen: React.FC = () => {
   };
 
   // Section Save Handlers
-  const handleSaveActiveSection = () => {
+  const handleSaveActiveSection = async () => {
     if (activeTab === 'personal') {
       const errs = validatePersonalDetails(personalState);
       if (Object.keys(errs).length > 0) {
         setErrors(errs as Record<string, string>);
         return;
       }
-      dispatch(updatePersonalDetails(personalState));
+      try {
+        await dispatch(updatePersonalProfileThunk(personalState)).unwrap();
+      } catch {
+        dispatch(updatePersonalDetails(personalState));
+      }
       setFeedback('Personal information updated successfully.');
       setTimeout(() => setFeedback(null), 3000);
     } else if (activeTab === 'academic') {
@@ -134,7 +141,11 @@ export const EditProfileScreen: React.FC = () => {
         setErrors(errs as Record<string, string>);
         return;
       }
-      dispatch(updateAcademicDetails(academicState));
+      try {
+        await dispatch(updateAcademicProfileThunk(academicState)).unwrap();
+      } catch {
+        dispatch(updateAcademicDetails(academicState));
+      }
       setFeedback('Academic credentials updated successfully.');
       setTimeout(() => setFeedback(null), 3000);
     } else if (activeTab === 'category' || activeTab === 'preferences') {
@@ -143,7 +154,11 @@ export const EditProfileScreen: React.FC = () => {
         setErrors(errs as Record<string, string>);
         return;
       }
-      dispatch(updatePreferencesDetails(preferencesState));
+      try {
+        await dispatch(updatePreferencesProfileThunk(preferencesState)).unwrap();
+      } catch {
+        dispatch(updatePreferencesDetails(preferencesState));
+      }
       setFeedback('Category & study preferences updated successfully.');
       setTimeout(() => setFeedback(null), 3000);
     }

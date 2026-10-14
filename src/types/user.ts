@@ -8,13 +8,23 @@ import {
   PreferencesDetails,
 } from './registration';
 
-export type UserRole = 'student' | 'admin' | 'reviewer';
+export type UserRole = 'student' | 'provider' | 'admin' | 'reviewer';
 
 export type EducationLevel =
   | 'high_school'
   | 'undergraduate'
   | 'postgraduate'
   | 'doctorate';
+
+export interface ProviderProfile {
+  id: string;
+  organizationName: string;
+  contactPerson?: string;
+  website?: string;
+  phone?: string;
+  description?: string;
+  isApproved: boolean;
+}
 
 export interface UserSettings {
   notificationsEnabled: boolean;
@@ -35,6 +45,7 @@ export interface UserProfile {
   name?: string;
   role?: UserRole;
   avatarUrl?: string;
+  providerProfile?: ProviderProfile;
   educationLevel: EducationLevel;
   major?: string;
   gpa?: number;

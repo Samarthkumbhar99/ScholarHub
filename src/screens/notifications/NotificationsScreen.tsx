@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
@@ -8,6 +8,10 @@ import {
   markAllNotificationsRead,
   setNotificationFilterTab,
   resetNotifications,
+  fetchNotificationsThunk,
+  fetchUnreadCountThunk,
+  markNotificationReadThunk,
+  markAllNotificationsReadThunk,
 } from '../../store/slices/notificationSlice';
 import {
   NotificationItem,
@@ -38,6 +42,11 @@ export const NotificationsScreen: React.FC = () => {
     (state) => state.notifications
   );
 
+  useEffect(() => {
+    dispatch(fetchNotificationsThunk());
+    dispatch(fetchUnreadCountThunk());
+  }, [dispatch]);
+
   // Filter items based on active filter tab
   const filteredItems = useMemo(() => {
     if (filterTab === 'unread') {
@@ -55,7 +64,7 @@ export const NotificationsScreen: React.FC = () => {
   const handleNotificationPress = (notification: NotificationItem) => {
     // 1. Mark as read immediately
     if (!notification.isRead) {
-      dispatch(markNotificationRead(notification.id));
+      dispatch(markNotificationReadThunk(notification.id));
     }
 
     // 2. Perform contextual routing
@@ -114,7 +123,7 @@ export const NotificationsScreen: React.FC = () => {
   };
 
   const handleMarkAllAsRead = () => {
-    dispatch(markAllNotificationsRead());
+    dispatch(markAllNotificationsReadThunk());
   };
 
   const filterTabs: { key: NotificationFilterTab; label: string; count: number }[] = [

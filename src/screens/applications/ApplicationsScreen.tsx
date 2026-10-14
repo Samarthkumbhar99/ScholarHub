@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StudentTabParamList, RootStackParamList, StudentTabScreenNavigationProp } from '../../types/navigation';
@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks';
 import {
   setFilterTab,
   ApplicationFilterTab,
+  fetchApplicationsThunk,
 } from '../../store/slices/applicationSlice';
 import {
   ScreenContainer,
@@ -38,6 +39,10 @@ export const ApplicationsScreen: React.FC = () => {
   const navigation = useNavigation<ApplicationsTabNavProp>();
   const dispatch = useAppDispatch();
   const { items, filterTab } = useAppSelector((state) => state.applications);
+
+  useEffect(() => {
+    dispatch(fetchApplicationsThunk());
+  }, [dispatch]);
 
   // Filter application items
   const filteredApplications = useMemo(() => {

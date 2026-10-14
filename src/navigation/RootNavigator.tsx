@@ -25,6 +25,11 @@ import {
 } from '../screens/studyAbroad';
 import { ShowcaseScreen } from '../screens/ShowcaseScreen';
 import { FoundationScreen } from '../screens/FoundationScreen';
+import {
+  AdminModerationDashboardScreen,
+  AdminScholarshipReviewScreen,
+} from '../screens/admin';
+import { ProviderDashboardScreen } from '../screens/provider';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -152,6 +157,25 @@ export const RootNavigator: React.FC = () => {
       {/* Dev / Design System Showcase Screens */}
       <Stack.Screen name="Showcase" component={ShowcaseScreen} />
       <Stack.Screen name="Foundation" component={FoundationScreen} />
+
+      {/* Provider Dashboard Screen */}
+      <Stack.Screen
+        name="ProviderDashboard"
+        component={ProviderDashboardScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+
+      {/* Admin Moderation & Review Screens */}
+      <Stack.Screen
+        name="AdminDashboard"
+        component={AdminModerationDashboardScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="AdminScholarshipReview"
+        component={AdminScholarshipReviewScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
     </Stack.Navigator>
   );
 };

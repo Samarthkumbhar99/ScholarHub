@@ -153,6 +153,29 @@ export const SettingsScreen: React.FC = () => {
           </View>
         </Card>
 
+        {/* Admin Moderation Shortcut Card */}
+        <Card variant="elevated" className="p-4 mb-4 border border-blue-200 bg-blue-50/40">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2 flex-1 mr-2">
+              <Text className="text-base">🛡️</Text>
+              <View className="flex-1">
+                <Text className="text-sm font-extrabold text-slate-900">
+                  Admin Moderation Portal
+                </Text>
+                <Text className="text-[11px] text-slate-500">
+                  Review & approve discovered scholarships
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AdminDashboard')}
+              className="bg-primary-600 px-3 py-1.5 rounded-lg"
+            >
+              <Text className="text-xs font-bold text-white">Open ➔</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+
         {/* 3. Support & Legal Documents Card */}
         <Card variant="elevated" className="p-4 mb-4 border border-slate-200 bg-white">
           <View className="flex-row items-center gap-2 mb-2 pb-2 border-b border-slate-100">

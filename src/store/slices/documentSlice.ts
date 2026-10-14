@@ -1,12 +1,16 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { DocumentItem } from '../../types/document';
 import { formatFileSizeBytes } from '../../utils/documentUtils';
+import { documentService, UploadDocumentParams } from '../../services/documentService';
+import { mapBackendDocumentsToSlots } from '../../utils/adapters';
 
 export interface DocumentState {
   items: DocumentItem[];
+  isLoading: boolean;
+  error: string | null;
 }
 
-export const initialDocuments: DocumentItem[] = [
+export const initialDefaultDocuments: DocumentItem[] = [
   // 1. Identity
   {
     id: 'doc_aadhaar',
@@ -158,9 +162,72 @@ export const initialDocuments: DocumentItem[] = [
   },
 ];
 
+// Backwards-compatible export
+export const initialDocuments = initialDefaultDocuments;
+
 const initialState: DocumentState = {
-  items: initialDocuments,
+  items: initialDefaultDocuments,
+  isLoading: false,
+  error: null,
 };
+
+// ==============================================================================
+// ASYNC THUNKS
+// ==============================================================================
+
+export const fetchDocumentsThunk = createAsyncThunk(
+  'documents/fetchDocuments',
+  async (category: string | undefined, { rejectWithValue }) => {
+    try {
+      const response = await documentService.listDocuments(category, 1, 100);
+      return mapBackendDocumentsToSlots(response.data.items || []);
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch documents');
+    }
+  }
+);
+
+export const uploadDocumentThunk = createAsyncThunk(
+  'documents/uploadDocument',
+  async (params: UploadDocumentParams, { dispatch, rejectWithValue }) => {
+    try {
+      await documentService.uploadDocument(params);
+      dispatch(fetchDocumentsThunk(undefined));
+      return params;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to upload document');
+    }
+  }
+);
+
+export const replaceDocumentThunk = createAsyncThunk(
+  'documents/replaceDocument',
+  async (
+    payload: { id: string; params: UploadDocumentParams },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      await documentService.replaceDocument(payload.id, payload.params);
+      dispatch(fetchDocumentsThunk(undefined));
+      return payload;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to replace document');
+    }
+  }
+);
+
+export const deleteDocumentThunk = createAsyncThunk(
+  'documents/deleteDocument',
+  async (documentId: string, { dispatch, rejectWithValue }) => {
+    try {
+      await documentService.deleteDocument(documentId);
+      dispatch(fetchDocumentsThunk(undefined));
+      return documentId;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to delete document');
+    }
+  }
+);
 
 export interface UploadDocumentPayload {
   id: string;
@@ -175,9 +242,14 @@ export const documentSlice = createSlice({
   name: 'documents',
   initialState,
   reducers: {
+    setDocuments: (state, action: PayloadAction<DocumentItem[]>) => {
+      state.items = action.payload;
+      state.isLoading = false;
+      state.error = null;
+    },
     uploadDocument: (state, action: PayloadAction<UploadDocumentPayload>) => {
       const { id, fileName, fileSizeBytes, fileUrl, mimeType, uploadedAt } = action.payload;
-      const doc = state.items.find((item) => item.id === id);
+      const doc = state.items.find((item) => item.id === id || item.type === id);
       if (doc) {
         doc.status = 'UPLOADED';
         doc.fileName = fileName;
@@ -190,7 +262,7 @@ export const documentSlice = createSlice({
     },
     replaceDocument: (state, action: PayloadAction<UploadDocumentPayload>) => {
       const { id, fileName, fileSizeBytes, fileUrl, mimeType, uploadedAt } = action.payload;
-      const doc = state.items.find((item) => item.id === id);
+      const doc = state.items.find((item) => item.id === id || item.type === id);
       if (doc) {
         doc.status = 'UPLOADED';
         doc.fileName = fileName;
@@ -203,7 +275,7 @@ export const documentSlice = createSlice({
     },
     removeDocument: (state, action: PayloadAction<string>) => {
       const docId = action.payload;
-      const doc = state.items.find((item) => item.id === docId);
+      const doc = state.items.find((item) => item.id === docId || item.type === docId);
       if (doc) {
         doc.status = 'MISSING';
         doc.fileName = undefined;
@@ -215,12 +287,29 @@ export const documentSlice = createSlice({
       }
     },
     resetDocuments: (state) => {
-      state.items = initialDocuments;
+      state.items = initialDefaultDocuments;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDocumentsThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchDocumentsThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchDocumentsThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
 export const {
+  setDocuments,
   uploadDocument,
   replaceDocument,
   removeDocument,

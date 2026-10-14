@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql+asyncpg://scholarhub_user:scholarhub_password@localhost:5432/scholarhub_db"
     )
+    TEST_DATABASE_URL: Optional[str] = None
     DB_ECHO: bool = False
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10
@@ -65,9 +66,17 @@ class Settings(BaseSettings):
         ".png",
     ]
 
-    @field_validator("DATABASE_URL", mode="before")
+    # Automatic Scholarship Discovery Scheduling Configuration
+    DISCOVERY_SCHEDULE_ENABLED: bool = True
+    DISCOVERY_SCHEDULE_INTERVAL_HOURS: int = 12
+    DISCOVERY_SCHEDULE_INITIAL_DELAY_SECONDS: int = 60
+    DISCOVERY_SCHEDULE_SOURCES: Union[List[str], str] = ["nsp"]
+    DISCOVERY_SCHEDULE_TIMEOUT_SECONDS: int = 300
+    DISCOVERY_SCHEDULE_MAX_RETRIES: int = 2
+
+    @field_validator("DATABASE_URL", "TEST_DATABASE_URL", mode="before")
     @classmethod
-    def assemble_database_url(cls, value: str) -> str:
+    def assemble_database_url(cls, value: Optional[str]) -> Optional[str]:
         """Ensure database URL utilizes the asyncpg driver for async SQLAlchemy."""
         if not value:
             return value
@@ -91,6 +100,21 @@ class Settings(BaseSettings):
         elif isinstance(value, (list, tuple)):
             return [str(origin) for origin in value]
         return []
+
+    @field_validator("DISCOVERY_SCHEDULE_SOURCES", mode="before")
+    @classmethod
+    def assemble_discovery_schedule_sources(cls, value: Union[str, List[str]]) -> List[str]:
+        """Parse source slugs list whether supplied as JSON string, comma-separated string, or list."""
+        if isinstance(value, str):
+            if value.startswith("[") and value.endswith("]"):
+                try:
+                    return [s.strip().lower() for s in json.loads(value) if str(s).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [origin.strip().lower() for origin in value.split(",") if origin.strip()]
+        elif isinstance(value, (list, tuple)):
+            return [str(origin).strip().lower() for origin in value if str(origin).strip()]
+        return ["nsp"]
 
     model_config = SettingsConfigDict(
         env_file=".env",

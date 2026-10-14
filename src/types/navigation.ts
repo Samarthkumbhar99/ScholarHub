@@ -44,6 +44,9 @@ export type RootStackParamList = {
   CourseDetails: { courseId: string };
   Showcase: undefined;
   Foundation: undefined;
+  ProviderDashboard: undefined;
+  AdminDashboard: undefined;
+  AdminScholarshipReview: { scholarshipId: string };
 };
 
 /**

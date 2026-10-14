@@ -20,6 +20,7 @@ def test_alembic_config_and_metadata():
     assert alembic_dir.exists(), "alembic directory not found"
 
     alembic_cfg = Config(str(alembic_ini_path))
+    alembic_cfg.set_main_option("script_location", str(alembic_dir))
     script_dir = ScriptDirectory.from_config(alembic_cfg)
 
     # Verify head revision
@@ -104,10 +105,13 @@ async def test_database_tables_and_enums_exist():
             assert "application_status_enum" in db_enums
             assert "study_preference_enum" in db_enums
             assert "notification_type_enum" in db_enums
+            assert "user_role_enum" in db_enums
 
+            assert set(db_enums["user_role_enum"]).issuperset({"STUDENT", "ADMIN", "PROVIDER"})
             assert db_enums["study_preference_enum"] == ["INDIA", "ABROAD", "BOTH"]
             assert "SAVED" in db_enums["application_status_enum"]
             assert "SCHOLARSHIP_RECEIVED" in db_enums["application_status_enum"]
             assert "DEADLINE_REMINDER" in db_enums["notification_type_enum"]
     except Exception as e:
         pytest.skip(f"Live PostgreSQL database check skipped/failed: {e}")
+
